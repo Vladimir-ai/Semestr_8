@@ -1,0 +1,15 @@
+CC = gcc
+CXX = g++
+LINK = ld
+RM = rm -f
+
+C_FLAGS = -Wall -Werror -g
+CXX_FLAGS = -Wall -Werror -g
+MAP_FLAGS = -Xlinker -Map=$@.map
+LINK_FLAGS = -Wl,--gc-sections $(MAP_FLAGS)
+
+C_COMPILE = $(CC) -c $(C_FLAGS) $(INCPATH) -o $@ $<
+
+CXX_COMPILE = $(CXX) &(CXX_FLAGS) -c
+
+LINK_BINARY = $(CC) -o $@ -Wl, --start-group $^ -Wl, --end-group $(LINK_GROUP)

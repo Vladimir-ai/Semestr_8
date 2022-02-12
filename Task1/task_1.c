@@ -93,7 +93,7 @@ void print_arr(uint8_t *bytes, size_t len)
 {
   for (size_t idx = 0; idx < len; idx++)
   {
-    printf("%hx", bytes[idx]);
+    printf("%c", bytes[idx]);
   }
 
   printf("\n");
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
   text_t text;
   cipher_key_t key;
 
-  generate_arr(text.text_chars, sizeof(text));
+  generate_printable(text.text_chars, sizeof(text));
   generate_arr(key.cipher_key_bytes, sizeof(key));
 
   print_arr(text.text_chars, sizeof(text));
