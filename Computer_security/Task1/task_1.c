@@ -4,10 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
+
 #define BLOCK_SIZE_BYTES          8U
 #define BLOCK_PIECES_COUNT        4U
 #define ROUND_COUNT               8U
-#define TEXT_LEN_BYTES            80U
+#define TEXT_LEN_BYTES            16U
 
 #define BLOCK_PIECE_SIZE_BYTES    ((BLOCK_SIZE_BYTES) / (BLOCK_PIECES_COUNT))
 #define TEXT_LEN_BLOCKS           ((TEXT_LEN_BYTES) / (BLOCK_SIZE_BYTES))
@@ -21,7 +23,7 @@ _Static_assert(IS_POWER_OF_TWO(BLOCK_SIZE_BYTES * 8) && (BLOCK_SIZE_BYTES > 1),
 _Static_assert(IS_POWER_OF_TWO(BLOCK_PIECES_COUNT) && (BLOCK_PIECES_COUNT > 1),
   "Block count should be power of 2");
 
-_Static_assert(BLOCK_SIZE_BYTES > BLOCK_PIECES_COUNT,
+_Static_assert(BLOCK_SIZE_BYTES >= BLOCK_PIECES_COUNT,
   "Block size (in bytes) should be greater than block count");
 
 _Static_assert(ROUND_COUNT > 0,
@@ -51,24 +53,24 @@ typedef union text_u
   block_t text_blocks[TEXT_LEN_BYTES / BLOCK_SIZE_BYTES];
 } text_t;
 
-void generate_arr(uint8_t *arr, size_t size)
-{
-  for (size_t ind = 0; ind < size; ind++)
-  {
-    arr[ind] = rand() % UINT8_MAX;
-  }
-}
 
-void apply_func(block_t *block, const block_elem_t key)
+static void apply_func(block_t *block, const block_elem_t key)
 {
   block_elem_t block_piece;
+  block_elem_t fst_block;
+  block_elem_t shifted_key;
 
   memcpy(block_piece, block->block_piece[0], sizeof(block->block_piece[0]));
+  memcpy(fst_block, block->block_piece[1], BLOCK_PIECE_SIZE_BYTES);
+  memcpy(shifted_key, key, sizeof(shifted_key));
 
-  for(size_t byte = 0; byte < sizeof(block_elem_t); byte++)
-  {
-    block->block_piece[0][byte] = block->block_piece[1][byte] ^ key[byte];
-  }
+  left_shift_array(shifted_key, sizeof(shifted_key), 3);
+
+  left_shift_array(fst_block, sizeof(block_piece), 8);
+
+  xor_array_onplace(fst_block, key, sizeof(fst_block));
+
+  memcpy(block->block_piece[0], fst_block, sizeof(fst_block));
 
   for (int idx = 2; idx < BLOCK_PIECES_COUNT; idx++)
   {
@@ -78,7 +80,8 @@ void apply_func(block_t *block, const block_elem_t key)
   memmove(block->block_piece[BLOCK_PIECES_COUNT - 1], block_piece, sizeof(block_piece));
 }
 
-void process_text(text_t *text, cipher_key_t key)
+
+void cipher_text(text_t *text, cipher_key_t key)
 {
   for (size_t block_idx = 0; block_idx < TEXT_LEN_BLOCKS; block_idx++)
   {
@@ -89,15 +92,15 @@ void process_text(text_t *text, cipher_key_t key)
   }
 }
 
-void print_arr(uint8_t *bytes, size_t len)
-{
-  for (size_t idx = 0; idx < len; idx++)
-  {
-    printf("%c", bytes[idx]);
-  }
 
-  printf("\n");
+static void generate_arr(uint8_t *arr, size_t size)
+{
+  for (size_t ind = 0; ind < size; ind++)
+  {
+    arr[ind] = rand() % UINT8_MAX;
+  }
 }
+
 
 void generate_printable(uint8_t *bytes, size_t len)
 {
@@ -114,6 +117,18 @@ void generate_printable(uint8_t *bytes, size_t len)
   }
 }
 
+
+static void print_arr(uint8_t *bytes, size_t len)
+{
+  for (size_t idx = 0; idx < len; idx++)
+  {
+    printf("%02x", bytes[idx]);
+  }
+
+  printf("\n");
+}
+
+
 int main(int argc, char *argv[])
 {
   text_t text;
@@ -122,17 +137,20 @@ int main(int argc, char *argv[])
   generate_printable(text.text_chars, sizeof(text));
   generate_arr(key.cipher_key_bytes, sizeof(key));
 
+  printf("Plain text: ");
   print_arr(text.text_chars, sizeof(text));
+  printf("Key: ");
   print_arr(key.cipher_key_bytes, sizeof(key));
 
-  process_text(&text, key);
+  cipher_text(&text, key);
 
+  printf("Cipher text: ");
   print_arr(text.text_chars, sizeof(text));
 
-  process_text(&text, key);
+  cipher_text(&text, key);
 
+  printf("Plain text: ");
   print_arr(text.text_chars, sizeof(text));
-
 
   return 0;
 }
