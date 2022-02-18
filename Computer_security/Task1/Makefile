@@ -1,11 +1,13 @@
 include ../Makefile.common
 
-SRC = task_1.c
+INCPATH = -I ../Common
+
+SRC = task_1.c ../Common/common.c
 OBJ = ${SRC:.c=.o}
 
 all: run
 
-$(OBJ) : $(SRC)
+%.o : %.c
 	$(C_COMPILE)
 
 run: $(OBJ)
