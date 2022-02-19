@@ -3,15 +3,17 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "common.h"
 
 #define BLOCK_SIZE_BYTES          8U
 #define BLOCK_PIECES_COUNT        4U
 #define ROUND_COUNT               8U
-#define TEXT_LEN_BYTES            16U
+#define TEXT_LEN_BYTES            (BLOCK_SIZE_BYTES * 10U)
 
 #define BLOCK_PIECE_SIZE_BYTES    ((BLOCK_SIZE_BYTES) / (BLOCK_PIECES_COUNT))
+#define KEY_LEN_BYTES             ((BLOCK_SIZE_BYTES) * 2U)
 #define TEXT_LEN_BLOCKS           ((TEXT_LEN_BYTES) / (BLOCK_SIZE_BYTES))
 
 #define IS_POWER_OF_TWO(x)        (((x) & ((x) - 1)) == 0)
@@ -43,8 +45,8 @@ typedef union block_u
 
 
 typedef union cipher_key_u {
-  uint8_t cipher_key_bytes[BLOCK_PIECES_COUNT * ROUND_COUNT];
-  block_elem_t key_piece[ROUND_COUNT];
+  uint8_t cipher_key_bytes[KEY_LEN_BYTES];
+  block_elem_t key_piece[KEY_LEN_BYTES / BLOCK_SIZE_BYTES];
 } cipher_key_t;
 
 typedef struct text_s
@@ -85,8 +87,53 @@ static void apply_func(block_t *block, const block_elem_t key)
 }
 
 
+static bool try_add_padding_to_the_end(text_t *text)
+{
+  size_t idx;
+
+  if (text->len_bytes % BLOCK_SIZE_BYTES)
+  {
+    for (idx = 0; (idx + text->len_bytes) % BLOCK_SIZE_BYTES != 0; idx++)
+    {
+      text->data.text_chars[idx + text->len_bytes] = 0;
+    }
+
+    text->data.text_chars[idx + text->len_bytes - 1] = idx;
+    text->len_bytes = idx + text->len_bytes;
+
+    return true;
+  }
+
+  return false;
+}
+
+static bool try_remove_padding_in_end(text_t *text)
+{
+  size_t padding;
+
+  if ((padding = text->data.text_chars[text->len_bytes - 1] % BLOCK_SIZE_BYTES))
+  {
+    for (size_t idx = text->len_bytes - 2; padding > 1; padding--)
+    {
+      if(text->data.text_chars[idx] != 0)
+      {
+        return false;
+      }
+    }
+
+    text->len_bytes -= text->data.text_chars[text->len_bytes - 1] % BLOCK_SIZE_BYTES;
+  }
+
+  return true;
+}
+
+/* Text pointer should allow to add padding bytes */
 void cipher_text(text_t *text, cipher_key_t key)
 {
+  bool padding_added;
+
+  padding_added = try_add_padding_to_the_end(text);
+
   for (size_t block_idx = 0; block_idx < text->len_bytes; block_idx++)
   {
     for (size_t round = 0; round < ROUND_COUNT; round++)
@@ -94,6 +141,11 @@ void cipher_text(text_t *text, cipher_key_t key)
       right_shift_array(key.cipher_key_bytes, sizeof(key), 12 * round);
       apply_func(&text->data.text_blocks[block_idx], key.key_piece[0]);
     }
+  }
+
+  if (!padding_added)
+  {
+    try_remove_padding_in_end(text);
   }
 }
 
@@ -123,27 +175,142 @@ void generate_printable(uint8_t *bytes, size_t len)
 }
 
 
+static void print_help_to_stdout(void)
+{
+  printf("Arguments for this function:\n");
+  printf("-s <string>\n");
+  printf("-k <key>\n");
+  printf("-f <input file> -o <output file>\n");
+  printf("-d - run two times\n");
+}
+
+
 int main(int argc, char *argv[])
 {
-  text_t text;
-  cipher_key_t key;
+  char c;
 
-  text.len_bytes = 140U;
+  text_t text = {0};
+  cipher_key_t key = {0};
+  FILE *input_file = NULL;
+  FILE *output_file = NULL;
+  bool two_runs = false;
 
-  if (text.len_bytes % BLOCK_SIZE_BYTES)
+  while ((c = getopt (argc, argv, "f:o:s:k:hd")) != -1)
+    switch (c)
+    {
+      case 'h':
+        print_help_to_stdout();
+        break;
+      case 's':
+      {
+        text.len_bytes = strlen(optarg);
+
+        if (text.len_bytes % BLOCK_SIZE_BYTES)
+        {
+          text.data.text_chars = (uint8_t *)malloc(text.len_bytes / BLOCK_SIZE_BYTES * BLOCK_SIZE_BYTES + BLOCK_SIZE_BYTES);
+        }
+        else
+        {
+          text.data.text_chars = (uint8_t *)malloc(text.len_bytes);
+        }
+
+        memcpy(text.data.text_chars, optarg, text.len_bytes);
+      }
+        break;
+      case 'f':
+        input_file = fopen(optarg, "r");
+        if (!input_file)
+        {
+          printf("File %s not found\n", optarg);
+          printf("Aborting.\n");
+          return 1;
+        }
+        break;
+      case 'o':
+        output_file = fopen(optarg, "w");
+        if (!output_file)
+        {
+          printf("File %s not found\n", optarg);
+          printf("Aborting.\n");
+          return 1;
+        }
+        break;
+      case 'k':
+        if (strlen(optarg) < KEY_LEN_BYTES)
+        {
+          printf("Key is too short, should be %d bytes len.\nAborting.\n", KEY_LEN_BYTES);
+          return 1;
+        }
+        else if (strlen(optarg) > KEY_LEN_BYTES)
+        {
+          printf("Warning: key is too long, truncating...\n");
+        }
+        memcpy(key.cipher_key_bytes, optarg, strlen(optarg));
+        break;
+      case 'd':
+        two_runs = true;
+        break;
+      case '?':
+        print_help_to_stdout();
+        break;
+    }
+
+  if (!input_file && !text.data.text_chars)
   {
-    text.data.text_chars = (uint8_t *)malloc(text.len_bytes / BLOCK_SIZE_BYTES * BLOCK_SIZE_BYTES + BLOCK_SIZE_BYTES);
-  }
-  else
-  {
-    text.data.text_chars = (uint8_t *)malloc(text.len_bytes);
+    printf("Warning: text nor file weren't specified.\n");
+    printf("Generating text with length %d bytes\n", TEXT_LEN_BYTES);
   }
 
-  generate_printable(text.data.text_chars, text.len_bytes);
-  generate_arr(key.cipher_key_bytes, sizeof(key));
+  if (input_file && text.data.text_chars)
+  {
+    printf("Error: you shouldn't specify str and file.\nAborting.\n");
+    return 1;
+  }
+
+  if (check_buf_is_empty(key.cipher_key_bytes, sizeof(key.cipher_key_bytes)))
+  {
+    printf("Warning: key wasn't specified. Generating new key...\n");
+    generate_arr(key.cipher_key_bytes, sizeof(key.cipher_key_bytes));
+  }
+
+  if (input_file)
+  {
+    ssize_t bytes_ctr;
+    text.data.text_chars = malloc(TEXT_LEN_BYTES + 1);
+
+    while((bytes_ctr = read(fileno(input_file), text.data.text_chars, TEXT_LEN_BYTES)))
+    {
+      text.len_bytes = bytes_ctr;
+      cipher_text(&text, key);
+
+      if(output_file)
+      {
+        fwrite(text.data.text_chars, text.len_bytes, 1, output_file);
+        fclose(output_file);
+      }
+      else
+      {
+        print_arr(text.data.text_chars, text.len_bytes);
+      }
+    }
+
+    fclose(input_file);
+    free(text.data.text_chars);
+    return 0;
+  }
+
+  if (!text.data.text_chars)
+  {
+    printf("Warning: text not specified, generating...\n");
+    text.data.text_chars = malloc(TEXT_LEN_BYTES);
+    text.len_bytes = TEXT_LEN_BYTES;
+
+    generate_printable(text.data.text_chars, TEXT_LEN_BYTES);
+  }
 
   printf("Plain text: ");
   print_arr(text.data.text_chars, text.len_bytes);
+
   printf("Key: ");
   print_arr(key.cipher_key_bytes, sizeof(key));
 
@@ -152,10 +319,13 @@ int main(int argc, char *argv[])
   printf("Cipher text: ");
   print_arr(text.data.text_chars, text.len_bytes);
 
-  cipher_text(&text, key);
+  if (two_runs)
+  {
+    cipher_text(&text, key);
 
-  printf("Plain text: ");
-  print_arr(text.data.text_chars, text.len_bytes);
+    printf("Plain text: ");
+    print_arr(text.data.text_chars, text.len_bytes);
+  }
 
   free(text.data.text_blocks);
 

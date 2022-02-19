@@ -1,4 +1,5 @@
 #include "common.h"
+#include <stdio.h>
 
 void left_shift_array(uint8_t *array, const size_t len, const size_t bits)
 {
@@ -122,3 +123,16 @@ void print_arr(uint8_t *bytes, size_t len)
   printf("\n");
 }
 
+
+bool check_buf_is_empty(const uint8_t *buf, size_t len)
+{
+  for (size_t idx = 0; idx < len; idx++)
+  {
+    if (buf[idx])
+    {
+      return false;
+    }
+  }
+
+  return true;
+}

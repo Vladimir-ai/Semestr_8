@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
 void bitwise_or_array(const uint8_t *array1, const uint8_t *array2, uint8_t *result, const size_t len);
 void xor_array(const uint8_t *array1, const uint8_t *array2, uint8_t *result, const size_t len);
@@ -17,5 +18,6 @@ void right_shift_array(uint8_t *array, const size_t len, const size_t bits);
 
 
 void print_arr(uint8_t *bytes, size_t len);
+bool check_buf_is_empty(const uint8_t *buf, size_t len);
 
 #endif
