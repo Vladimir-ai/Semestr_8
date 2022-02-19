@@ -15,4 +15,7 @@ void xor_array_onplace(uint8_t *dest, const uint8_t *src, const size_t len);
 void left_shift_array(uint8_t *array, const size_t len, const size_t bits);
 void right_shift_array(uint8_t *array, const size_t len, const size_t bits);
 
+
+void print_arr(uint8_t *bytes, size_t len);
+
 #endif

@@ -47,10 +47,14 @@ typedef union cipher_key_u {
   block_elem_t key_piece[ROUND_COUNT];
 } cipher_key_t;
 
-typedef union text_u
+typedef struct text_s
 {
-  uint8_t text_chars[TEXT_LEN_BYTES];
-  block_t text_blocks[TEXT_LEN_BYTES / BLOCK_SIZE_BYTES];
+  union
+  {
+    uint8_t *text_chars;
+    block_t *text_blocks;
+  } data;
+  size_t len_bytes;
 } text_t;
 
 
@@ -83,11 +87,12 @@ static void apply_func(block_t *block, const block_elem_t key)
 
 void cipher_text(text_t *text, cipher_key_t key)
 {
-  for (size_t block_idx = 0; block_idx < TEXT_LEN_BLOCKS; block_idx++)
+  for (size_t block_idx = 0; block_idx < text->len_bytes; block_idx++)
   {
     for (size_t round = 0; round < ROUND_COUNT; round++)
     {
-      apply_func(&text->text_blocks[block_idx], key.key_piece[round]);
+      right_shift_array(key.cipher_key_bytes, sizeof(key), 12 * round);
+      apply_func(&text->data.text_blocks[block_idx], key.key_piece[0]);
     }
   }
 }
@@ -118,39 +123,41 @@ void generate_printable(uint8_t *bytes, size_t len)
 }
 
 
-static void print_arr(uint8_t *bytes, size_t len)
-{
-  for (size_t idx = 0; idx < len; idx++)
-  {
-    printf("%02x", bytes[idx]);
-  }
-
-  printf("\n");
-}
-
-
 int main(int argc, char *argv[])
 {
   text_t text;
   cipher_key_t key;
 
-  generate_printable(text.text_chars, sizeof(text));
+  text.len_bytes = 140U;
+
+  if (text.len_bytes % BLOCK_SIZE_BYTES)
+  {
+    text.data.text_chars = (uint8_t *)malloc(text.len_bytes / BLOCK_SIZE_BYTES * BLOCK_SIZE_BYTES + BLOCK_SIZE_BYTES);
+  }
+  else
+  {
+    text.data.text_chars = (uint8_t *)malloc(text.len_bytes);
+  }
+
+  generate_printable(text.data.text_chars, text.len_bytes);
   generate_arr(key.cipher_key_bytes, sizeof(key));
 
   printf("Plain text: ");
-  print_arr(text.text_chars, sizeof(text));
+  print_arr(text.data.text_chars, text.len_bytes);
   printf("Key: ");
   print_arr(key.cipher_key_bytes, sizeof(key));
 
   cipher_text(&text, key);
 
   printf("Cipher text: ");
-  print_arr(text.text_chars, sizeof(text));
+  print_arr(text.data.text_chars, text.len_bytes);
 
   cipher_text(&text, key);
 
   printf("Plain text: ");
-  print_arr(text.text_chars, sizeof(text));
+  print_arr(text.data.text_chars, text.len_bytes);
+
+  free(text.data.text_blocks);
 
   return 0;
 }

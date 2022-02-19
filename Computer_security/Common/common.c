@@ -110,3 +110,15 @@ void xor_array_onplace(uint8_t *dest, const uint8_t *src, const size_t len)
     dest[idx] ^= src[idx];
   }
 }
+
+
+void print_arr(uint8_t *bytes, size_t len)
+{
+  for (size_t idx = 0; idx < len; idx++)
+  {
+    printf("%02x", bytes[idx]);
+  }
+
+  printf("\n");
+}
+
