@@ -2,7 +2,10 @@ include ../Makefile.common
 
 INCPATH = -I ../Common
 
-SRC = task_1.c ../Common/common.c
+SRC = task_2.c \
+	cipher_text.c \
+	 ../Common/common.c
+
 OBJ = ${SRC:.c=.o}
 
 all: run

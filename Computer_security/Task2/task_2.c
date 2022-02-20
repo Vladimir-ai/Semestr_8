@@ -4,151 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 
-#include "common.h"
-
-#define BLOCK_SIZE_BYTES          8U
-#define BLOCK_PIECES_COUNT        4U
-#define ROUND_COUNT               8U
-#define TEXT_LEN_BYTES            (BLOCK_SIZE_BYTES * 10U)
-
-#define BLOCK_PIECE_SIZE_BYTES    ((BLOCK_SIZE_BYTES) / (BLOCK_PIECES_COUNT))
-#define KEY_LEN_BYTES             ((BLOCK_SIZE_BYTES) * 2U)
-#define TEXT_LEN_BLOCKS           ((TEXT_LEN_BYTES) / (BLOCK_SIZE_BYTES))
-
-#define IS_POWER_OF_TWO(x)        (((x) & ((x) - 1)) == 0)
-
-#ifdef __GNUC__
-_Static_assert(IS_POWER_OF_TWO(BLOCK_SIZE_BYTES * 8) && (BLOCK_SIZE_BYTES > 1),
-  "Block size in bits should be power of 2");
-
-_Static_assert(IS_POWER_OF_TWO(BLOCK_PIECES_COUNT) && (BLOCK_PIECES_COUNT > 1),
-  "Block count should be power of 2");
-
-_Static_assert(BLOCK_SIZE_BYTES >= BLOCK_PIECES_COUNT,
-  "Block size (in bytes) should be greater than block count");
-
-_Static_assert(ROUND_COUNT > 0,
-  "Round count should be > 0");
-
-_Static_assert(TEXT_LEN_BYTES % BLOCK_SIZE_BYTES == 0,
-  "TEXT_LEN_BYTES % BLOCK_SIZE_IN_BYTES shouldn't be equal to 0");
-#endif /* __GNUC__ */
-
-typedef uint8_t block_elem_t[BLOCK_PIECE_SIZE_BYTES];
-
-typedef union block_u
-{
-  uint8_t block_bytes[BLOCK_SIZE_BYTES];
-  block_elem_t block_piece[BLOCK_PIECES_COUNT];
-} block_t;
-
-
-typedef union cipher_key_u {
-  uint8_t cipher_key_bytes[KEY_LEN_BYTES];
-  block_elem_t key_piece[KEY_LEN_BYTES / BLOCK_SIZE_BYTES];
-} cipher_key_t;
-
-typedef struct text_s
-{
-  union
-  {
-    uint8_t *text_chars;
-    block_t *text_blocks;
-  } data;
-  size_t len_bytes;
-} text_t;
-
-
-static void apply_func(block_t *block, const block_elem_t key)
-{
-  block_elem_t block_piece;
-  block_elem_t fst_block;
-  block_elem_t shifted_key;
-
-  memcpy(block_piece, block->block_piece[0], sizeof(block->block_piece[0]));
-  memcpy(fst_block, block->block_piece[1], BLOCK_PIECE_SIZE_BYTES);
-  memcpy(shifted_key, key, sizeof(shifted_key));
-
-  left_shift_array(shifted_key, sizeof(shifted_key), 3);
-
-  left_shift_array(fst_block, sizeof(block_piece), 8);
-
-  xor_array_onplace(fst_block, key, sizeof(fst_block));
-
-  memcpy(block->block_piece[0], fst_block, sizeof(fst_block));
-
-  for (int idx = 2; idx < BLOCK_PIECES_COUNT; idx++)
-  {
-    memmove(block->block_piece[idx - 1], block->block_piece[idx], sizeof(*block->block_piece));
-  }
-
-  memmove(block->block_piece[BLOCK_PIECES_COUNT - 1], block_piece, sizeof(block_piece));
-}
-
-
-static bool try_add_padding_to_the_end(text_t *text)
-{
-  size_t idx;
-
-  if (text->len_bytes % BLOCK_SIZE_BYTES)
-  {
-    for (idx = 0; (idx + text->len_bytes) % BLOCK_SIZE_BYTES != 0; idx++)
-    {
-      text->data.text_chars[idx + text->len_bytes] = 0;
-    }
-
-    text->data.text_chars[idx + text->len_bytes - 1] = idx;
-    text->len_bytes = idx + text->len_bytes;
-
-    return true;
-  }
-
-  return false;
-}
-
-static bool try_remove_padding_in_end(text_t *text)
-{
-  size_t padding;
-
-  if ((padding = text->data.text_chars[text->len_bytes - 1] % BLOCK_SIZE_BYTES))
-  {
-    for (size_t idx = text->len_bytes - 2; padding > 1; padding--)
-    {
-      if(text->data.text_chars[idx] != 0)
-      {
-        return false;
-      }
-    }
-
-    text->len_bytes -= text->data.text_chars[text->len_bytes - 1] % BLOCK_SIZE_BYTES;
-  }
-
-  return true;
-}
-
-/* Text pointer should allow to add padding bytes */
-void cipher_text(text_t *text, cipher_key_t key)
-{
-  bool padding_added;
-
-  padding_added = try_add_padding_to_the_end(text);
-
-  for (size_t block_idx = 0; block_idx < text->len_bytes; block_idx++)
-  {
-    for (size_t round = 0; round < ROUND_COUNT; round++)
-    {
-      right_shift_array(key.cipher_key_bytes, sizeof(key), 12 * round);
-      apply_func(&text->data.text_blocks[block_idx], key.key_piece[0]);
-    }
-  }
-
-  if (!padding_added)
-  {
-    try_remove_padding_in_end(text);
-  }
-}
-
+#include "task_config.h"
 
 static void generate_arr(uint8_t *arr, size_t size)
 {
@@ -175,32 +33,60 @@ void generate_printable(uint8_t *bytes, size_t len)
 }
 
 
+static void generate_iv_if_needed_with_print(cipher_args_t *args)
+{
+  if (args->cipher_mode != ECB &&
+    check_buf_is_empty(args->init_vector.block_bytes, sizeof(args->init_vector.block_bytes)))
+  {
+    printf("Warning: generating IV...\n");
+
+    generate_arr(args->init_vector.block_bytes, sizeof(args->init_vector.block_bytes));
+
+    printf("IV: ");
+    print_arr(args->init_vector.block_bytes, sizeof(args->init_vector.block_bytes));
+  }
+}
+
+
 static void print_help_to_stdout(void)
 {
   printf("Arguments for this function:\n");
-  printf("-s <string>\n");
-  printf("-k <key>\n");
+  printf("-s <string> - try to cipher or decipher text from string\n");
+  printf("-k <key>\n\n");
+
+  printf("-m <mode_num> - use this mode (default mode: ECB):\n");
+  printf( "1) Use ECB mode (Electronic codebook)\n");
+  printf( "2) Use CBC mode (Cipher block chaining)\n");
+  printf( "3) Use CFB mode (Cipher feedback)\n");
+  printf( "4) Use OFB mode (Output feedback)\n");
+  printf( "5) Use CTR mode (Counter)\n\n");
+
+  printf("-i initial vector (IV)\n");
+
   printf("-f <input file> -o <output file>\n");
-  printf("-d - run two times (Don't work with files.)\n");
+  printf("-c - cipher mode[default]\n");
+  printf("-d - decipher mode\n");
 }
 
 
 int main(int argc, char *argv[])
 {
   char c;
+  bool decipher = false;
+  bool cipher = false;
 
   text_t text = {0};
   cipher_key_t key = {0};
+  cipher_args_t cipher_args = {.init_vector.block_bytes = {0}, .cipher_mode = ECB};
   FILE *input_file = NULL;
   FILE *output_file = NULL;
-  bool two_runs = false;
 
-  while ((c = getopt (argc, argv, "f:o:s:k:hd")) != -1)
+  while ((c = getopt (argc, argv, "f:o:s:k:m:i:hdc")) != -1)
     switch (c)
     {
       case 'h':
         print_help_to_stdout();
-        break;
+        return 0;
       case 's':
       {
         text.len_bytes = strlen(optarg);
@@ -245,10 +131,42 @@ int main(int argc, char *argv[])
         {
           printf("Warning: key is too long, truncating...\n");
         }
-        memcpy(key.cipher_key_bytes, optarg, strlen(optarg));
+        memcpy(key.cipher_key_bytes, optarg, KEY_LEN_BYTES);
         break;
       case 'd':
-        two_runs = true;
+        decipher = true;
+        break;
+      case 'c':
+        cipher = true;
+        break;
+      case 'm':
+      {
+        int32_t mode;
+        if ((mode = atoi(optarg)) && mode > 0 && mode < MODE_NUM)
+        {
+          cipher_args.cipher_mode = mode;
+        }
+        else
+        {
+          printf("Invalid mode. Aboring.\n");
+          return 1;
+        }
+      }
+        break;
+      case 'i':
+      {
+        if (strlen(optarg) < BLOCK_SIZE_BYTES)
+        {
+          printf("IV is too short, should be %d bytes len.\nAborting.\n", BLOCK_SIZE_BYTES);
+          return 1;
+        }
+        else if (strlen(optarg) > BLOCK_SIZE_BYTES)
+        {
+          printf("Warning: IV is too long, truncating...\n");
+        }
+        memcpy(cipher_args.init_vector.block_bytes, optarg, BLOCK_SIZE_BYTES);
+        break;
+      }
         break;
       case '?':
         print_help_to_stdout();
@@ -267,11 +185,19 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  if (!text.data.text_chars && (!cipher && decipher))
+  {
+    printf("Error: You should provide string to decipher\n");
+    return 1;
+  }
+
   if (check_buf_is_empty(key.cipher_key_bytes, sizeof(key.cipher_key_bytes)))
   {
     printf("Warning: key wasn't specified. Generating new key...\n");
     generate_arr(key.cipher_key_bytes, sizeof(key.cipher_key_bytes));
   }
+
+  generate_iv_if_needed_with_print(&cipher_args);
 
   if (input_file)
   {
@@ -281,7 +207,14 @@ int main(int argc, char *argv[])
     while((bytes_ctr = read(fileno(input_file), text.data.text_chars, TEXT_LEN_BYTES)))
     {
       text.len_bytes = bytes_ctr;
-      cipher_text(&text, key);
+      if (cipher || (!decipher && !cipher))
+      {
+        cipher_text(&text, key, cipher_args, false);
+      }
+      else if (decipher)
+      {
+        cipher_text(&text, key, cipher_args, true);
+      }
 
       if(output_file)
       {
@@ -292,6 +225,15 @@ int main(int argc, char *argv[])
       {
         print_arr(text.data.text_chars, text.len_bytes);
       }
+
+      if (cipher && decipher)
+      {
+        cipher_text(&text, key, cipher_args, true);
+
+        printf("Deciphered text: ");
+        print_arr(text.data.text_chars, text.len_bytes);
+      }
+
     }
 
     fclose(input_file);
@@ -308,13 +250,20 @@ int main(int argc, char *argv[])
     generate_printable(text.data.text_chars, TEXT_LEN_BYTES);
   }
 
-  printf("Plain text: ");
   print_arr(text.data.text_chars, text.len_bytes);
 
   printf("Key: ");
   print_arr(key.cipher_key_bytes, sizeof(key));
 
-  cipher_text(&text, key);
+  if (cipher || (!cipher && !decipher))
+  {
+    cipher_text(&text, key, cipher_args, false);
+  }
+  else if (decipher)
+  {
+    cipher_text(&text, key, cipher_args, true);
+  }
+
 
   if (output_file)
   {
@@ -323,16 +272,15 @@ int main(int argc, char *argv[])
   }
   else
   {
-    printf("Cipher text: ");
     print_arr(text.data.text_chars, text.len_bytes);
+  }
 
-    if (two_runs)
-    {
-      cipher_text(&text, key);
+  if (decipher && cipher)
+  {
+    cipher_text(&text, key, cipher_args, true);
 
-      printf("Plain text: ");
-      print_arr(text.data.text_chars, text.len_bytes);
-    }
+    printf("Deciphered text: ");
+    print_arr(text.data.text_chars, text.len_bytes);
   }
 
   free(text.data.text_blocks);
