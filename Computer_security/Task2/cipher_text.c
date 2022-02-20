@@ -98,6 +98,11 @@ static void process_block(block_t *block, cipher_key_t key)
 /* Text pointer should allow to add padding bytes */
 void cipher_text(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher)
 {
+  if (text->len_bytes == 0)
+  {
+    return;
+  }
+
   if (!decipher)
   {
     try_add_padding_to_the_end(text);

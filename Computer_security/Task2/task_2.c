@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  if (!text.data.text_chars && (!cipher && decipher))
+  if ((!text.data.text_chars && !input_file) && (!cipher && decipher))
   {
     printf("Error: You should provide string to decipher\n");
     return 1;
@@ -195,6 +195,9 @@ int main(int argc, char *argv[])
   {
     printf("Warning: key wasn't specified. Generating new key...\n");
     generate_arr(key.cipher_key_bytes, sizeof(key.cipher_key_bytes));
+
+    printf("Key: ");
+    print_arr(key.cipher_key_bytes, sizeof(key.cipher_key_bytes));
   }
 
   generate_iv_if_needed_with_print(&cipher_args);
@@ -219,7 +222,6 @@ int main(int argc, char *argv[])
       if(output_file)
       {
         fwrite(text.data.text_chars, text.len_bytes, 1, output_file);
-        fclose(output_file);
       }
       else
       {
@@ -233,7 +235,11 @@ int main(int argc, char *argv[])
         printf("Deciphered text: ");
         print_arr(text.data.text_chars, text.len_bytes);
       }
+    }
 
+    if (output_file)
+    {
+      fclose(output_file);
     }
 
     fclose(input_file);
