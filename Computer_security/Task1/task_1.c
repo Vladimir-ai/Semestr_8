@@ -181,7 +181,7 @@ static void print_help_to_stdout(void)
   printf("-s <string>\n");
   printf("-k <key>\n");
   printf("-f <input file> -o <output file>\n");
-  printf("-d - run two times\n");
+  printf("-d - run two times (Don't work with files.)\n");
 }
 
 
@@ -316,18 +316,25 @@ int main(int argc, char *argv[])
 
   cipher_text(&text, key);
 
-  printf("Cipher text: ");
-  print_arr(text.data.text_chars, text.len_bytes);
-
-  if (two_runs)
+  if (output_file)
   {
-    cipher_text(&text, key);
-
-    printf("Plain text: ");
+    fwrite(text.data.text_chars, text.len_bytes, 1, output_file);
+    fclose(output_file);
+  }
+  else
+  {
+    printf("Cipher text: ");
     print_arr(text.data.text_chars, text.len_bytes);
+
+    if (two_runs)
+    {
+      cipher_text(&text, key);
+
+      printf("Plain text: ");
+      print_arr(text.data.text_chars, text.len_bytes);
+    }
   }
 
   free(text.data.text_blocks);
-
   return 0;
 }
