@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define IS_POWER_OF_TWO(x)        (((x) & ((x) - 1)) == 0)
+#define VUNUSED(x)                ((void)(x))
+
 void bitwise_or_array(const uint8_t *array1, const uint8_t *array2, uint8_t *result, const size_t len);
 void xor_array(const uint8_t *array1, const uint8_t *array2, uint8_t *result, const size_t len);
 
