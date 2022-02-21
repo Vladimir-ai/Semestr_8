@@ -47,6 +47,26 @@ static void generate_iv_if_needed_with_print(cipher_args_t *args)
   }
 }
 
+/* string should be allocated using malloc */
+static uint8_t *update_len_if_needed(char *string)
+{
+  const size_t len = strlen((char *) string);
+  uint8_t *ret;
+
+  if (len % BLOCK_SIZE_BYTES)
+  {
+    ret = (uint8_t *)malloc(len / BLOCK_SIZE_BYTES * BLOCK_SIZE_BYTES + BLOCK_SIZE_BYTES + 1);
+  }
+  else
+  {
+    ret = (uint8_t *)malloc(len + 1);
+  }
+
+  memcpy(ret, string, len);
+
+  return ret;
+}
+
 
 static void print_help_to_stdout(void)
 {
@@ -88,20 +108,17 @@ int main(int argc, char *argv[])
         print_help_to_stdout();
         return 0;
       case 's':
-      {
-        text.len_bytes = strlen(optarg);
-
-        if (text.len_bytes % BLOCK_SIZE_BYTES)
         {
-          text.data.text_chars = (uint8_t *)malloc(text.len_bytes / BLOCK_SIZE_BYTES * BLOCK_SIZE_BYTES + BLOCK_SIZE_BYTES);
-        }
-        else
-        {
-          text.data.text_chars = (uint8_t *)malloc(text.len_bytes);
-        }
+          uint8_t *ptr_to_free;
+          text.data.text_chars = read_hex_string(optarg);
 
-        memcpy(text.data.text_chars, optarg, text.len_bytes);
-      }
+          ptr_to_free = text.data.text_chars;
+
+          text.data.text_chars = update_len_if_needed((char *) text.data.text_chars);
+
+          text.len_bytes = strlen((char *) text.data.text_chars);
+          free(ptr_to_free);
+        }
         break;
       case 'f':
         input_file = fopen(optarg, "r");
@@ -122,16 +139,21 @@ int main(int argc, char *argv[])
         }
         break;
       case 'k':
-        if (strlen(optarg) < KEY_LEN_BYTES)
         {
-          printf("Key is too short, should be %d bytes len.\nAborting.\n", KEY_LEN_BYTES);
-          return 1;
+          uint8_t *input_key = read_hex_string(optarg);
+
+          if (strlen((char *) input_key) < KEY_LEN_BYTES)
+          {
+            printf("Key is too short, should be %d bytes len.\nAborting.\n", KEY_LEN_BYTES);
+            return 1;
+          }
+          else if (strlen((char *) input_key) > KEY_LEN_BYTES)
+          {
+            printf("Warning: key is too long, truncating...\n");
+          }
+          memmove(key.cipher_key_bytes, input_key, KEY_LEN_BYTES);
+          free(input_key);
         }
-        else if (strlen(optarg) > KEY_LEN_BYTES)
-        {
-          printf("Warning: key is too long, truncating...\n");
-        }
-        memcpy(key.cipher_key_bytes, optarg, KEY_LEN_BYTES);
         break;
       case 'd':
         decipher = true;

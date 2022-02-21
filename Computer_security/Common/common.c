@@ -1,5 +1,6 @@
 #include "common.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 void left_shift_array(uint8_t *array, const size_t len, const size_t bits)
 {
@@ -135,4 +136,28 @@ bool check_buf_is_empty(const uint8_t *buf, size_t len)
   }
 
   return true;
+}
+
+static uint8_t hexstr_to_uint8(char arr[2])
+{
+  char copy[3];
+
+  memcpy(copy, arr, 2);
+
+  return strtol(copy, NULL, 16);
+}
+
+uint8_t *read_hex_string(char *string)
+{
+  const size_t len = strlen(string);
+
+  uint8_t *array = malloc(len / 2 + 2);
+  memset(array, 0, len / 2 + 2);
+
+  for (size_t str_idx = 0, res_idx = 0; str_idx < len; str_idx += 2, res_idx++)
+  {
+    array[res_idx] = hexstr_to_uint8(string + str_idx);
+  }
+
+  return array;
 }
