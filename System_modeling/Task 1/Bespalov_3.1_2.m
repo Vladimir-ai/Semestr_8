@@ -24,42 +24,62 @@ fraceks;
 d_sigma=0.04;
 alpha=0.01;
 
-n = 100;
-% тестовый запуск для определения D~
-D_tilde = 0;
-
-for j = 1:N
-  sigma = fraceks(j,1);
-  mu = fraceks(j,2);
-  for k = 1:n
-    test(k) = systemeqv(sigma, mu);
-  end
-  m_mean = mean(test);
-  
-  D_mean = 0;
-  for k = 1:n
-    D_mean = D_mean + (m_mean - test(k))^2;
-  end
-  
-  D_tilde = D_tilde + D_mean / (n - 1);
-end
-
-D_tilde = D_tilde / N;
+% n = 100;
+% % тестовый запуск для определения D~
+% D_tilde = 0;
+% 
+% for j = 1:N
+%   sigma = fraceks(j,1);
+%   mu = fraceks(j,2);
+%   for k = 1:n
+%     test(k) = systemeqv(sigma, mu);
+%   end
+%   m_mean = mean(test);
+%   
+%   D_mean = 0;
+%   for k = 1:n
+%     D_mean = D_mean + (m_mean - test(k))^2;
+%   end
+%   
+%   D_tilde = D_tilde + D_mean / (n - 1);
+% end
+% 
+% D_tilde = D_tilde / N;
 %определение t-критического
 tkr_alpha=norminv(1-alpha/2);
-%определение требуемого числа испытаний
-NE=round(tkr_alpha^2 * D_tilde / d_sigma^2) 
+
 
 
 %цикл по совокупности экспериментов стратегического плана
 for j=1:N
   sigma = fraceks(j,1); 
   mu = fraceks(j,2);
+
+  u(1) = systemeqv(sigma, mu);
+  u(2) = systemeqv(sigma, mu);
+  D_tilde = (mean(u) - u(1))^2 + (mean(u) - u(2))^2
+  sum_u = sum(u)
+  k = 2
+
+  %определение требуемого числа испытаний
+  NE=round(tkr_alpha^2 * D_tilde / d_sigma^2) 
+  
  %цикл статистических испытаний
- for k=1:NE
-  %имитация функционирования системы
-  u(k)=systemeqv(sigma, mu);
+ %do it in runtime
+ while k < NE || k < 10
+    k = k + 1;
+    u(k)=systemeqv(sigma, mu);
+    sum_u = sum_u + u(k);
+    mean_u = sum_u / k;
+    
+    for idx = 1 : k
+      D_tilde = (mean_u - u(idx))^2;
+    end
+    D_tilde = D_tilde / (k - 1)
+    
+    NE=round(tkr_alpha^2 * D_tilde / d_sigma^2) 
  end
+ 
  %оценка параметров (реакции) по выборке наблюдений
  DX=mean(u);
  Y(j)=DX;
