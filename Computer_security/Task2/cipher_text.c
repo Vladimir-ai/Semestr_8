@@ -136,7 +136,7 @@ void process_cbc(text_t *text, cipher_key_t key, const cipher_args_t args, const
   if (!decipher)
   {
     xor_array_onplace(text->data.text_blocks[0].block_bytes,
-                    args.init_vector.block_bytes,
+                    args.init_vector,
                     BLOCK_SIZE_BYTES);
 
     process_block(&text->data.text_blocks[0], key);
@@ -148,7 +148,7 @@ void process_cbc(text_t *text, cipher_key_t key, const cipher_args_t args, const
     process_block(&text->data.text_blocks[0], key);
 
     xor_array_onplace(text->data.text_blocks[0].block_bytes,
-                    args.init_vector.block_bytes,
+                    args.init_vector,
                     BLOCK_SIZE_BYTES);
   }
 
@@ -176,57 +176,77 @@ void process_cbc(text_t *text, cipher_key_t key, const cipher_args_t args, const
   }
 }
 
+
 void process_cfb(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher)
 {
   const size_t block_count = text->len_bytes / BLOCK_SIZE_BYTES;
+  block_t temp_value;
 
-  if (!decipher)
+  memcpy(temp_value.block_bytes, args.init_vector, BLOCK_SIZE_BYTES);
+
+  for (size_t block_idx = 0; block_idx < block_count; block_idx++)
   {
-    xor_array_onplace(text->data.text_blocks[0].block_bytes,
-                    args.init_vector.block_bytes,
-                    BLOCK_SIZE_BYTES);
+    process_block(&temp_value, key);
 
-    process_block(&text->data.text_blocks[0], key);
-
-    for (size_t block_idx = 1; block_idx < block_count; block_idx++)
+    if (!decipher)
     {
-        xor_array_onplace(text->data.text_blocks[block_idx].block_bytes,
-                      text->data.text_blocks[block_idx - 1].block_bytes,
-                      BLOCK_SIZE_BYTES);
+      xor_array_onplace(text->data.text_blocks[block_idx].block_bytes,
+                  temp_value.block_bytes,
+                  BLOCK_SIZE_BYTES);
 
-      process_block(&text->data.text_blocks[block_idx], key);
+      memcpy(temp_value.block_bytes, text->data.text_blocks[block_idx].block_bytes, BLOCK_SIZE_BYTES);
     }
-  }
-  else
-  {
-    for (size_t block_idx = block_count - 1; block_idx > 0; block_idx--)
+    else
     {
-      process_block(&text->data.text_blocks[block_idx], key);
+      block_t value_to_send;
+
+      memcpy(value_to_send.block_bytes,
+            text->data.text_blocks[block_idx].block_bytes,
+            BLOCK_SIZE_BYTES);
 
       xor_array_onplace(text->data.text_blocks[block_idx].block_bytes,
-                    text->data.text_blocks[block_idx - 1].block_bytes,
-                    BLOCK_SIZE_BYTES);
-    }
-
-    process_block(&text->data.text_blocks[0], key);
-
-    if (block_count > 1)
-    {
-      xor_array_onplace(text->data.text_blocks[0].block_bytes,
-                  args.init_vector.block_bytes,
+                  temp_value.block_bytes,
                   BLOCK_SIZE_BYTES);
+
+      memcpy(temp_value.block_bytes, value_to_send.block_bytes, BLOCK_SIZE_BYTES);
     }
   }
 }
 
+
 void process_ofb(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher)
 {
-  printf("Not suppoted\n");
-  abort();
+  const size_t block_count = text->len_bytes / BLOCK_SIZE_BYTES;
+  block_t temp_value;
+
+  memcpy(temp_value.block_bytes,
+    args.init_vector,
+    sizeof(args.init_vector));
+
+  for (size_t block_idx = 0; block_idx < block_count; block_idx++)
+  {
+    process_block(&temp_value, key);
+
+    xor_array_onplace(text->data.text_blocks[0].block_bytes,
+                    temp_value.block_bytes,
+                    BLOCK_SIZE_BYTES);
+  }
 }
 
 void process_ctr(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher)
 {
-  printf("Not suppoted\n");
-  abort();
+  const size_t block_count = text->len_bytes / BLOCK_SIZE_BYTES;
+  block_t temp_value;
+
+  memcpy(temp_value.block_bytes, args.init_vector, BLOCK_SIZE_BYTES);
+
+  for (size_t block_idx = 0; block_idx < block_count; block_idx++)
+  {
+    add_to_bigint_arr(temp_value.block_bytes, BLOCK_PIECE_SIZE_BYTES);
+    process_block(&temp_value, key);
+
+    xor_array_onplace(text->data.text_blocks[block_idx].block_bytes,
+        temp_value.block_bytes,
+        BLOCK_SIZE_BYTES);
+  }
 }

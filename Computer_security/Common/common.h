@@ -24,4 +24,5 @@ void print_arr(uint8_t *bytes, size_t len);
 bool check_buf_is_empty(const uint8_t *buf, size_t len);
 
 uint8_t *read_hex_string(char *string);
+void add_to_bigint_arr(uint8_t *arr, size_t len);
 #endif

@@ -6,6 +6,7 @@
 
 #define BLOCK_SIZE_BYTES          8U
 #define BLOCK_PIECES_COUNT        4U
+#define IV_SIZE_BYTES             8U
 #define ROUND_COUNT               8U
 #define TEXT_LEN_BYTES            (BLOCK_SIZE_BYTES * 10U)
 
@@ -52,13 +53,15 @@ typedef union block_u
 } block_t;
 
 
+typedef uint8_t initial_vector_t[IV_SIZE_BYTES];
+
 typedef union cipher_key_u {
   uint8_t cipher_key_bytes[KEY_LEN_BYTES];
   block_elem_t key_piece[KEY_LEN_BYTES / BLOCK_SIZE_BYTES];
 } cipher_key_t;
 
 typedef struct cipher_args_s {
-  block_t init_vector;
+  initial_vector_t init_vector;
   cipher_mode_t cipher_mode;
 } cipher_args_t;
 

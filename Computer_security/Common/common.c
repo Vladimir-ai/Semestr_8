@@ -161,3 +161,27 @@ uint8_t *read_hex_string(char *string)
 
   return array;
 }
+
+
+void add_to_bigint_arr(uint8_t *arr, size_t len)
+{
+  /* len - size in bytes, all, that is greater will be truncated */
+  size_t idx;
+
+  for (idx = 0; idx < len; idx++)
+  {
+    if (arr[idx] == UINT8_MAX)
+    {
+      arr[idx] = 0;
+
+      if(idx + 1 < len)
+      {
+        arr[idx + 1]++;
+      }
+    }
+    else
+    {
+      arr[idx]++;
+    }
+  }
+}
