@@ -114,7 +114,7 @@ void xor_array_onplace(uint8_t *dest, const uint8_t *src, const size_t len)
 }
 
 
-void print_arr(uint8_t *bytes, size_t len)
+void print_arr(const uint8_t *bytes, size_t len)
 {
   for (size_t idx = 0; idx < len; idx++)
   {
@@ -124,7 +124,14 @@ void print_arr(uint8_t *bytes, size_t len)
   printf("\n");
 }
 
-
+/**
+ * @brief
+ *
+ * @param buf char buffer to check
+ * @param len buffer length
+ * @return true if buffer is filled with 0
+ * @return false otherwise
+ */
 bool check_buf_is_empty(const uint8_t *buf, size_t len)
 {
   for (size_t idx = 0; idx < len; idx++)
@@ -166,22 +173,28 @@ uint8_t *read_hex_string(char *string)
 void add_to_bigint_arr(uint8_t *arr, size_t len)
 {
   /* len - size in bytes, all, that is greater will be truncated */
-  size_t idx;
+  size_t idx = 0;
 
-  for (idx = 0; idx < len; idx++)
+  while (idx < len)
   {
-    if (arr[idx] == UINT8_MAX)
+    if (arr[len - idx - 1] == UINT8_MAX)
     {
-      arr[idx] = 0;
-
-      if(idx + 1 < len)
-      {
-        arr[idx + 1]++;
-      }
+      arr[len - idx - 1] = 0;
     }
     else
     {
-      arr[idx]++;
+      arr[len - idx - 1]++;
+      break;
     }
+    idx++;
+  }
+}
+
+
+void generate_arr(uint8_t *arr, size_t size)
+{
+  for (size_t ind = 0; ind < size; ind++)
+  {
+    arr[ind] = rand() % UINT8_MAX;
   }
 }

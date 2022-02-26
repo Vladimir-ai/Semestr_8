@@ -54,9 +54,6 @@ static void try_add_padding_to_the_end(text_t *text)
     {
       text->data.text_chars[idx + text->len_bytes] = 0;
     }
-
-    text->data.text_chars[idx + text->len_bytes - 1] = idx;
-    text->len_bytes = idx + text->len_bytes;
   }
   else
   {
@@ -64,10 +61,10 @@ static void try_add_padding_to_the_end(text_t *text)
     {
       text->data.text_chars[idx + text->len_bytes] = 0;
     }
-
-    text->data.text_chars[idx + text->len_bytes - 1] = idx;
-    text->len_bytes = idx + text->len_bytes;
   }
+
+  text->data.text_chars[idx + text->len_bytes - 1] = idx;
+  text->len_bytes += idx;
 }
 
 static bool check_padding(const text_t *text)
@@ -125,10 +122,12 @@ void cipher_text(text_t *text, cipher_key_t key, const cipher_args_t args, const
     try_add_padding_to_the_end(text);
   }
 
-  process_algo[args.cipher_mode - 1](text, key, args, decipher);
+  process_algo[args.cipher_mode](text, key, args, decipher);
 
   if (decipher)
   {
+    printf("debug: before truncaing: ");
+    print_arr(text->data.text_chars, text->len_bytes);
     try_remove_padding_in_end(text);
   }
 }

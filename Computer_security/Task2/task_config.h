@@ -6,8 +6,8 @@
 
 #define BLOCK_SIZE_BYTES          8U
 #define BLOCK_PIECES_COUNT        4U
-#define IV_SIZE_BYTES             8U
-#define ROUND_COUNT               8U
+#define IV_SIZE_BYTES             BLOCK_SIZE_BYTES
+#define ROUND_COUNT               BLOCK_SIZE_BYTES
 #define TEXT_LEN_BYTES            (BLOCK_SIZE_BYTES * 10U)
 
 #define BLOCK_PIECE_SIZE_BYTES    ((BLOCK_SIZE_BYTES) / (BLOCK_PIECES_COUNT))
@@ -18,7 +18,7 @@
 
 
 #ifdef __GNUC__
-_Static_assert(IS_POWER_OF_TWO(BLOCK_SIZE_BYTES * 8) && (BLOCK_SIZE_BYTES > 1),
+_Static_assert(IS_POWER_OF_TWO(BLOCK_SIZE_BYTES) && (BLOCK_SIZE_BYTES > 1),
   "Block size in bits should be power of 2");
 
 _Static_assert(IS_POWER_OF_TWO(BLOCK_PIECES_COUNT) && (BLOCK_PIECES_COUNT > 1),
@@ -29,17 +29,20 @@ _Static_assert(BLOCK_SIZE_BYTES >= BLOCK_PIECES_COUNT,
 
 _Static_assert(ROUND_COUNT > 0,
   "Round count should be > 0");
+
+_Static_assert(ROUND_COUNT >= BLOCK_SIZE_BYTES,
+  "Round count should be Greater or Equal to block size in bytes");
 #endif /* __GNUC__ */
 
-typedef enum cipher_mode_e
-{
-  ECB = 1,
-  CBC = 2,
-  CFB = 3,
-  OFB = 4,
-  CTR = 5,
-  MODE_NUM = 6
-} cipher_mode_t;
+#define ECB 0
+#define CBC 1
+#define CFB 2
+#define OFB 3
+#define CTR 4
+#define MODE_NUM 5
+
+typedef uint8_t cipher_mode_t;
+
 
 typedef uint8_t block_elem_t[BLOCK_PIECE_SIZE_BYTES];
 
@@ -58,8 +61,8 @@ typedef union cipher_key_u {
 } cipher_key_t;
 
 typedef struct cipher_args_s {
-  initial_vector_t init_vector;
   cipher_mode_t cipher_mode;
+  initial_vector_t init_vector;
 } cipher_args_t;
 
 typedef struct text_s

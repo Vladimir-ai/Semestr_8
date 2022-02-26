@@ -9,14 +9,6 @@
 
 #include "task_config.h"
 
-static void generate_arr(uint8_t *arr, size_t size)
-{
-  for (size_t ind = 0; ind < size; ind++)
-  {
-    arr[ind] = rand() % UINT8_MAX;
-  }
-}
-
 
 void generate_printable(uint8_t *bytes, size_t len)
 {
@@ -190,7 +182,6 @@ int main(int argc, char *argv[])
         memcpy(cipher_args.init_vector, optarg, IV_SIZE_BYTES);
         break;
       }
-        break;
       case '?':
         print_help_to_stdout();
         break;
