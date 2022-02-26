@@ -70,26 +70,35 @@ static void try_add_padding_to_the_end(text_t *text)
   }
 }
 
-static void try_remove_padding_in_end(text_t *text)
+static bool check_padding(const text_t *text)
 {
-  size_t padding;
-  size_t idx;
+  size_t padding = text->data.text_chars[text->len_bytes - 1];
 
-  padding = text->data.text_chars[text->len_bytes - 1];
-
-  for (idx = text->len_bytes - 2; padding > 1; padding--)
+  /* don't check last byte */
+  for (size_t idx = 0; idx < padding - 1; idx++)
   {
-    if(text->data.text_chars[idx] != 0)
+    if (text->data.text_chars[text->len_bytes - padding + idx] != 0)
     {
-      break;
+      return false;
     }
   }
 
-  if (padding == 1)
+  return true;
+}
+
+static void try_remove_padding_in_end(text_t *text)
+{
+  size_t padding;
+
+  padding = text->data.text_chars[text->len_bytes - 1];
+
+  if(!check_padding(text))
   {
-    text->len_bytes -= text->data.text_chars[text->len_bytes - 1];
+    printf("Incorrect padding at the end. Aborting...\n");
+    abort();
   }
-  ;
+
+  text->len_bytes -= padding;
 }
 
 

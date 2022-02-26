@@ -29,9 +29,6 @@ _Static_assert(BLOCK_SIZE_BYTES >= BLOCK_PIECES_COUNT,
 
 _Static_assert(ROUND_COUNT > 0,
   "Round count should be > 0");
-
-_Static_assert(TEXT_LEN_BYTES % BLOCK_SIZE_BYTES == 0,
-  "TEXT_LEN_BYTES % BLOCK_SIZE_IN_BYTES shouldn't be equal to 0");
 #endif /* __GNUC__ */
 
 typedef enum cipher_mode_e
