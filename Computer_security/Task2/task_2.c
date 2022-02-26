@@ -36,14 +36,14 @@ void generate_printable(uint8_t *bytes, size_t len)
 static void generate_iv_if_needed_with_print(cipher_args_t *args)
 {
   if (args->cipher_mode != ECB &&
-    check_buf_is_empty(args->init_vector.block_bytes, sizeof(args->init_vector.block_bytes)))
+    check_buf_is_empty(args->init_vector, sizeof(args->init_vector)))
   {
     printf("Warning: generating IV...\n");
 
-    generate_arr(args->init_vector.block_bytes, sizeof(args->init_vector.block_bytes));
+    generate_arr(args->init_vector, sizeof(args->init_vector));
 
     printf("IV: ");
-    print_arr(args->init_vector.block_bytes, sizeof(args->init_vector.block_bytes));
+    print_arr(args->init_vector, sizeof(args->init_vector));
   }
 }
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
   text_t text = {0};
   cipher_key_t key = {0};
-  cipher_args_t cipher_args = {.init_vector.block_bytes = {0}, .cipher_mode = ECB};
+  cipher_args_t cipher_args = {.init_vector = {0}, .cipher_mode = ECB};
   FILE *input_file = NULL;
   FILE *output_file = NULL;
 
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
         {
           printf("Warning: IV is too long, truncating...\n");
         }
-        memcpy(cipher_args.init_vector.block_bytes, optarg, BLOCK_SIZE_BYTES);
+        memcpy(cipher_args.init_vector, optarg, BLOCK_SIZE_BYTES);
         break;
       }
         break;
