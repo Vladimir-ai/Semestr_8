@@ -26,6 +26,7 @@ static void check_text(cipher_key_t key, const cipher_args_t args)
   const size_t max_text_len = BLOCK_SIZE_BYTES * 2;
   size_t curr_len;
   size_t iter_num = 0;
+  size_t error_ctr = 0;
 
 #ifdef FILE_OUTPUT
   char *output_file_name = "output.txt";
@@ -121,6 +122,7 @@ static void check_text(cipher_key_t key, const cipher_args_t args)
           || text.len_bytes != text_copy.len_bytes)
         {
           printf("ERROR: incorrect len\n");
+          error_ctr++;
         }
         else
         {
@@ -133,6 +135,7 @@ static void check_text(cipher_key_t key, const cipher_args_t args)
       free(text_copy.data.text_chars);
     }
 
+    printf("Error count: %ld", error_ctr);
     free(text.data.text_chars);
   }
 
