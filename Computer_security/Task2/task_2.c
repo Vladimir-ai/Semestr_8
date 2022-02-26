@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "task_config.h"
 
@@ -177,16 +178,16 @@ int main(int argc, char *argv[])
         break;
       case 'i':
       {
-        if (strlen(optarg) < BLOCK_SIZE_BYTES)
+        if (strlen(optarg) < IV_SIZE_BYTES)
         {
           printf("IV is too short, should be %d bytes len.\nAborting.\n", BLOCK_SIZE_BYTES);
           return 1;
         }
-        else if (strlen(optarg) > BLOCK_SIZE_BYTES)
+        else if (strlen(optarg) > IV_SIZE_BYTES)
         {
           printf("Warning: IV is too long, truncating...\n");
         }
-        memcpy(cipher_args.init_vector, optarg, BLOCK_SIZE_BYTES);
+        memcpy(cipher_args.init_vector, optarg, IV_SIZE_BYTES);
         break;
       }
         break;
@@ -215,6 +216,7 @@ int main(int argc, char *argv[])
 
   if (check_buf_is_empty(key.cipher_key_bytes, sizeof(key.cipher_key_bytes)))
   {
+    srand(time(NULL));
     printf("Warning: key wasn't specified. Generating new key...\n");
     generate_arr(key.cipher_key_bytes, sizeof(key.cipher_key_bytes));
 

@@ -44,7 +44,7 @@ static void apply_func(block_t *block, const block_elem_t key)
 }
 
 
-static bool try_add_padding_to_the_end(text_t *text)
+static void try_add_padding_to_the_end(text_t *text)
 {
   size_t idx;
 
@@ -57,31 +57,39 @@ static bool try_add_padding_to_the_end(text_t *text)
 
     text->data.text_chars[idx + text->len_bytes - 1] = idx;
     text->len_bytes = idx + text->len_bytes;
-
-    return true;
   }
-
-  return false;
-}
-
-static bool try_remove_padding_in_end(text_t *text)
-{
-  size_t padding;
-
-  if ((padding = text->data.text_chars[text->len_bytes - 1] % BLOCK_SIZE_BYTES))
+  else
   {
-    for (size_t idx = text->len_bytes - 2; padding > 1; padding--)
+    for (idx = 0; idx < BLOCK_SIZE_BYTES; idx++)
     {
-      if(text->data.text_chars[idx] != 0)
-      {
-        return false;
-      }
+      text->data.text_chars[idx + text->len_bytes] = 0;
     }
 
-    text->len_bytes -= text->data.text_chars[text->len_bytes - 1] % BLOCK_SIZE_BYTES;
+    text->data.text_chars[idx + text->len_bytes - 1] = idx;
+    text->len_bytes = idx + text->len_bytes;
+  }
+}
+
+static void try_remove_padding_in_end(text_t *text)
+{
+  size_t padding;
+  size_t idx;
+
+  padding = text->data.text_chars[text->len_bytes - 1];
+
+  for (idx = text->len_bytes - 2; padding > 1; padding--)
+  {
+    if(text->data.text_chars[idx] != 0)
+    {
+      break;
+    }
   }
 
-  return true;
+  if (padding == 1)
+  {
+    text->len_bytes -= text->data.text_chars[text->len_bytes - 1];
+  }
+  ;
 }
 
 
@@ -233,6 +241,7 @@ void process_ofb(text_t *text, cipher_key_t key, const cipher_args_t args, const
                     BLOCK_SIZE_BYTES);
   }
 }
+
 
 void process_ctr(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher)
 {
