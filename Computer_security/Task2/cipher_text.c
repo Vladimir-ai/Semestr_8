@@ -186,6 +186,7 @@ void process_cfb(text_t *text, cipher_key_t key, const cipher_args_t args, const
 
   for (size_t block_idx = 0; block_idx < block_count; block_idx++)
   {
+    left_shift_array(temp_value.block_bytes, BLOCK_SIZE_BYTES, 2);
     process_block(&temp_value, key);
 
     if (!decipher)
