@@ -9,7 +9,7 @@ MAP_FLAGS = -Xlinker -Map=$@.map
 LINK_FLAGS = -Wl,--gc-sections $(MAP_FLAGS)
 
 C_COMPILE = $(CC) -c $(C_FLAGS) $(INCPATH) -o $@ $<
-
-CXX_COMPILE = $(CXX) &(CXX_FLAGS) -c
+CXX_COMPILE = $(CXX) -c $(CXX_FLAGS) $(INCPATH) -o $@ $<
 
 LINK_BINARY = $(CC) -o $@ -Wl, --start-group $^ -Wl, --end-group $(LINK_GROUP)
+LINK_BINARY_CXX = $(CXX) -o $@ -Wl, --start-group $^ -Wl, --end-group $(LINK_GROUP)
