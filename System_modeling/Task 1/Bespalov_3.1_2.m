@@ -73,7 +73,7 @@ for j=1:N
     mean_u = sum_u / k;
     
     for idx = 1 : k
-      D_tilde = (mean_u - u(idx))^2;
+      D_tilde = D_tilde + (mean_u - u(idx))^2;
     end
     D_tilde = D_tilde / (k - 1)
     
