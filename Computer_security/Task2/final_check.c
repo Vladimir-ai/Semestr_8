@@ -8,7 +8,7 @@
 #include "task_config.h"
 #include "common.h"
 
-#define ITER_COUNT  100000UL
+#define ITER_COUNT  10000UL
 #define FILE_OUTPUT
 
 static void print_help_to_stdout(void)
@@ -22,8 +22,8 @@ static void print_help_to_stdout(void)
 static void check_text(cipher_key_t key, const cipher_args_t args)
 {
   const size_t max_iter = ITER_COUNT;
-  const size_t min_text_len = 1U;
-  const size_t max_text_len = BLOCK_SIZE_BYTES * 2;
+  const size_t min_text_len = BLOCK_SIZE_BYTES + 1;
+  const size_t max_text_len = BLOCK_SIZE_BYTES * 2 + 1;
   size_t curr_len;
   size_t iter_num = 0;
   size_t error_ctr = 0;
