@@ -12,15 +12,12 @@ def check(str1: str, str2: str):
   return True
 
 
-def bad_char_preprocess(substr: str, text: str):
+def bad_char_preprocess(substr: str):
   bad_char_tbl = dict()
-
-  for idx in range(len(substr)):
-    bad_char_tbl[substr[idx]] = idx
-
-  for char in text:
-    bad_char_tbl[char] = bad_char_tbl.get(char, -1)
-
+  
+  for idx in range(0, len(substr)-1):
+    bad_char_tbl[substr[idx]] = len(substr) - idx - 1
+  
   return bad_char_tbl
 
 
@@ -34,15 +31,11 @@ def shift_bad_char_rule(substr: str, text: str, idx: int, bad_char_tbl, debug = 
 
   if j < 0:
     if idx + m < len(text):
-      shift = m - bad_char_tbl[text[idx + m]]
-    else:
-      shift = m
+      shift = m - bad_char_tbl.get(text[idx + m], 0)
 
   else:
     if idx + m < len(text):
-      shift = j - bad_char_tbl[text[idx + m]]
-    else:
-      shift = j
+      shift = j - bad_char_tbl.get(text[idx + m], 0)
 
   if debug:
     print(f"bad_char: idx = {idx}, j = {j}, shift = {shift}")
@@ -104,7 +97,7 @@ def boyer_moore(substr: str, text: str, debug = False):
   idx = m # tail idx
   result = []
 
-  bad_char_tbl = bad_char_preprocess(substr, text)
+  bad_char_tbl = bad_char_preprocess(substr)
   border_pos, shift_arr = good_suffix_weak_preprocess(substr)
   shift_arr = good_suffix_strong_preprocess(substr, border_pos, shift_arr)
 
