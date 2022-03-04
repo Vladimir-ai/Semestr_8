@@ -243,13 +243,13 @@ if __name__ == '__main__':
 
   plt.show()
 
-  with PdfPages('plot.pdf') as export_pdf:
-    # print(result_arr)
-    plt.scatter(range(1, p), result_arr)
-    plt.grid(True)
-    plt.show()
+  # with PdfPages('plot.pdf') as export_pdf:
+  #   # print(result_arr)
+  #   plt.scatter(range(1, p), result_arr)
+  #   plt.grid(True)
+  #   plt.show()
 
-    export_pdf.savefig()
-    plt.close()
+  #   export_pdf.savefig()
+  #   plt.close()
 
 
