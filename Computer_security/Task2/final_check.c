@@ -47,14 +47,14 @@ static void check_text(cipher_key_t key, const cipher_args_t args)
   {
     text_t text = {.len_bytes = curr_len, .data.text_chars = malloc(curr_len)};
 
-    // if (curr_len > min_text_len)
-    // {
-    //   generate_arr(text.data.text_chars, curr_len);
-    // }
-    // else
-    // {
+    if (curr_len > min_text_len)
+    {
+      generate_arr(text.data.text_chars, curr_len);
+    }
+    else
+    {
       memset(text.data.text_chars, 0xAA, curr_len);
-    // }
+    }
 
     for (iter_num = 0; iter_num < max_iter; iter_num++)
     {
