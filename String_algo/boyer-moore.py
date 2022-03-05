@@ -3,90 +3,91 @@
 from operator import le
 import sys
 from time import time
+from typing import List
 
-def check(str1: str, str2: str):
-  for idx in range(len(str1)):
-    if str1[idx] != str2[idx]:
-      return False
+def reverse_check(str1: str, str2: str):
+  idx = len(str1) - 1
 
-  return True
+  while idx >= 0 and str1[idx] == str2[idx]:
+    idx -= 1
+
+  return idx
 
 
 def bad_char_preprocess(substr: str):
   bad_char_tbl = dict()
-  
-  for idx in range(0, len(substr)-1):
-    bad_char_tbl[substr[idx]] = len(substr) - idx - 1
-  
+
+  for idx in range(0, len(substr)):
+    if substr[idx] in bad_char_tbl:
+      bad_char_tbl[substr[idx]].append(len(substr) - idx - 1)
+    else:
+      bad_char_tbl[substr[idx]] = [len(substr) - idx - 1]
+
   return bad_char_tbl
 
 
-def shift_bad_char_rule(substr: str, text: str, idx: int, bad_char_tbl, debug = False):
-  shift = 0
-  m = len(substr)
-  j = m - 1
+def shift_bad_char_rule(bad_char, idx: int, bad_char_tbl, debug = False):
+  if idx < 0:
+    return 1
 
-  while j >= 0 and substr[j] == text[idx + j]:
-    j -= 1
+  left_pos = -1
 
-  if j < 0:
-    if idx + m < len(text):
-      shift = m - bad_char_tbl.get(text[idx + m], 0)
+  for elem in bad_char_tbl.get(bad_char, list()):
+    if elem < idx:
+      left_pos = elem
+      break
 
-  else:
-    if idx + m < len(text):
-      shift = j - bad_char_tbl.get(text[idx + m], 0)
-
-  if debug:
-    print(f"bad_char: idx = {idx}, j = {j}, shift = {shift}")
-
-  return shift
+  return idx - left_pos
 
 
 def good_suffix_weak_preprocess(substr: str):
-  border_position = [0] * (len(substr) + 1)
-  shift_arr = [0] * (len(substr) + 1)
+  n = len(substr)
+  bs = [0] * n
 
-  idx = len(substr)
-  j = len(substr) + 1
+  for idx in range(n - 2, -1, -1):
+    bs_left = bs[idx + 1]
 
-  border_position[idx] = j
+    while bs_left and substr[idx] != substr[n - bs_left - 1]:
+      bs_left = bs[n - bs_left]
 
-  while idx > 0:
-    while j <= len(substr) and substr[idx - 1] != substr[j - 1]:
-      if shift_arr[j] == 0:
-        shift_arr[j] = j - idx
-      j = border_position[j]
+    if substr[idx] == substr[n - bs_left - 1]:
+      bs[idx] = bs_left + 1
+    else:
+      bs[idx] = 0
 
-    idx -= 1
-    j -= 1
-    border_position[idx] = j
-
-  return border_position, shift_arr
+  return bs
 
 
-def good_suffix_strong_preprocess(substr: str, border_position, shift_arr):
-  j = border_position[0]
-  for idx in range(0, len(substr) + 1):
-    if shift_arr[idx] == 0:
-      shift_arr[idx] = j
-    if idx == j:
-      j = border_position[j]
+def good_suffix_strong_preprocess(bs: List[int]):
+  current_border = bs[0]
+  k = 0
+  border_shift = [0] * len(bs)
 
-  return shift_arr
+  while current_border:
+    while k < len(bs) - current_border:
+      border_shift[k] = current_border
+      current_border = bs[k]
+      k += 1
+
+  while k < len(bs):
+    border_shift[k] = 0
+    k += 1
+
+  return border_shift
 
 
-def shift_good_suffix_rule(substr: str, text: str, idx: int, shift_arr):
-  shift = 0
-  j = len(substr) - 1
+def shift_good_suffix_rule(ns, br, bad_pos):
+  if bad_pos == len(br) - 1:
+    return 1
 
-  while j >= 0 and substr[j] == text[idx + j]:
-    j-= 1
+  if bad_pos < 0:
+    return len(br) - br[0]
 
-  if j < 0:
-    shift = shift_arr[0]
+  copy_pos = ns[bad_pos]
+  if copy_pos >= 0:
+    shift = bad_pos - copy_pos + 1
   else:
-    shift = shift_arr[j + 1]
+    shift = len(bad_pos) - br[bad_pos]
 
   return shift
 
@@ -98,20 +99,19 @@ def boyer_moore(substr: str, text: str, debug = False):
   result = []
 
   bad_char_tbl = bad_char_preprocess(substr)
-  border_pos, shift_arr = good_suffix_weak_preprocess(substr)
-  shift_arr = good_suffix_strong_preprocess(substr, border_pos, shift_arr)
+  border_pos = good_suffix_weak_preprocess(substr)
+  shift_arr = good_suffix_strong_preprocess(border_pos)
 
   while(idx <= n):
-    if check(text[idx - m : idx], substr):
+    if (bad_pos := reverse_check(substr, text[idx - m : idx])) == -1:
       if debug:
         print(f"Found at {idx - m}")
 
       result.append(idx - m)
 
     shift = max(1,\
-                shift_bad_char_rule(substr, text, idx - m, bad_char_tbl), \
-                shift_good_suffix_rule(substr, text, idx - m, shift_arr))
-
+                # shift_bad_char_rule(substr[bad_pos], bad_pos, bad_char_tbl),
+                shift_good_suffix_rule(shift_arr, border_pos, bad_pos))
     idx += shift
 
   return result
