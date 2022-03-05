@@ -21,6 +21,7 @@ void right_shift_array(uint8_t *array, const size_t len, const size_t bits);
 
 
 void print_arr(const uint8_t *bytes, size_t len);
+void print_arr_ascii(const uint8_t *bytes, size_t len);
 bool check_buf_is_empty(const uint8_t *buf, size_t len);
 
 uint8_t *read_hex_string(char *string);

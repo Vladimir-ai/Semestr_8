@@ -8,7 +8,7 @@
 #include "task_config.h"
 #include "common.h"
 
-#define ITER_COUNT  10000UL
+#define ITER_COUNT  1024UL
 #define FILE_OUTPUT
 
 static void print_help_to_stdout(void)
@@ -31,7 +31,7 @@ static void check_text(cipher_key_t key, const cipher_args_t args)
 #ifdef FILE_OUTPUT
   char *output_file_name = "output.txt";
 
-  int fd = open(output_file_name, O_WRONLY | O_CREAT, 0644);
+  int fd = open(output_file_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (fd == -1) {
       perror("open failed");
       exit(1);
@@ -47,14 +47,14 @@ static void check_text(cipher_key_t key, const cipher_args_t args)
   {
     text_t text = {.len_bytes = curr_len, .data.text_chars = malloc(curr_len)};
 
-    if (curr_len > min_text_len)
-    {
-      generate_arr(text.data.text_chars, curr_len);
-    }
-    else
-    {
-      memset(text.data.text_chars, 0, curr_len);
-    }
+    // if (curr_len > min_text_len)
+    // {
+    //   generate_arr(text.data.text_chars, curr_len);
+    // }
+    // else
+    // {
+      memset(text.data.text_chars, 0xAA, curr_len);
+    // }
 
     for (iter_num = 0; iter_num < max_iter; iter_num++)
     {
@@ -105,6 +105,7 @@ static void check_text(cipher_key_t key, const cipher_args_t args)
         memcpy(key_copy.cipher_key_bytes, key.cipher_key_bytes, KEY_LEN_BYTES);
         memcpy(args_copy.init_vector, args.init_vector, IV_SIZE_BYTES);
         memcpy(text_copy.data.text_chars, text.data.text_chars, text.len_bytes);
+        text_copy.len_bytes = text.len_bytes;
 
         cipher_text(&text_copy, key_copy, args_copy, false);
 

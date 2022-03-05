@@ -124,6 +124,18 @@ void print_arr(const uint8_t *bytes, size_t len)
   printf("\n");
 }
 
+
+void print_arr_ascii(const uint8_t *bytes, size_t len)
+{
+  for (size_t idx = 0; idx < len; idx++)
+  {
+    printf("%c", bytes[idx]);
+  }
+
+  printf("\n");
+}
+
+
 /**
  * @brief
  *

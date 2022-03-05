@@ -94,13 +94,13 @@ int main(int argc, char *argv[])
   FILE *input_file = NULL;
   FILE *output_file = NULL;
 
-  while ((c = getopt (argc, argv, "f:o:s:k:m:i:hdc")) != -1)
+  while ((c = getopt (argc, argv, "f:o:s:k:m:i:b:hdc")) != -1)
     switch (c)
     {
       case 'h':
         print_help_to_stdout();
         return 0;
-      case 's':
+      case 'b':
         {
           uint8_t *ptr_to_free;
           text.data.text_chars = read_hex_string(optarg);
@@ -111,6 +111,13 @@ int main(int argc, char *argv[])
 
           text.len_bytes = strlen((char *) text.data.text_chars);
           free(ptr_to_free);
+        }
+        break;
+      case 's':
+        {
+          text.len_bytes = strlen(optarg);
+          text.data.text_chars = malloc(text.len_bytes + BLOCK_SIZE_BYTES);
+          memcpy(text.data.text_chars, optarg, text.len_bytes);
         }
         break;
       case 'f':
@@ -135,12 +142,12 @@ int main(int argc, char *argv[])
         {
           uint8_t *input_key = read_hex_string(optarg);
 
-          if (strlen((char *) input_key) < KEY_LEN_BYTES)
+          if (strlen(optarg) < KEY_LEN_BYTES * 2)
           {
             printf("Key is too short, should be %d bytes len.\nAborting.\n", KEY_LEN_BYTES);
             return 1;
           }
-          else if (strlen((char *) input_key) > KEY_LEN_BYTES)
+          else if (strlen(optarg) > 2 * KEY_LEN_BYTES)
           {
             printf("Warning: key is too long, truncating...\n");
           }
@@ -170,16 +177,18 @@ int main(int argc, char *argv[])
         break;
       case 'i':
       {
-        if (strlen(optarg) < IV_SIZE_BYTES)
+        uint8_t *input_key = read_hex_string(optarg);
+
+        if (strlen(optarg) < IV_SIZE_BYTES * 2)
         {
           printf("IV is too short, should be %d bytes len.\nAborting.\n", BLOCK_SIZE_BYTES);
           return 1;
         }
-        else if (strlen(optarg) > IV_SIZE_BYTES)
+        else if (strlen(optarg) > IV_SIZE_BYTES * 2)
         {
           printf("Warning: IV is too long, truncating...\n");
         }
-        memcpy(cipher_args.init_vector, optarg, IV_SIZE_BYTES);
+        memcpy(cipher_args.init_vector, input_key, IV_SIZE_BYTES);
         break;
       }
       case '?':
@@ -220,9 +229,13 @@ int main(int argc, char *argv[])
   if (input_file)
   {
     ssize_t bytes_ctr;
-    text.data.text_chars = malloc(TEXT_LEN_BYTES + 1);
 
-    while((bytes_ctr = read(fileno(input_file), text.data.text_chars, TEXT_LEN_BYTES)))
+    fseek(input_file, 0UL, SEEK_END);
+    text.len_bytes = ftell(input_file);
+    rewind(input_file);
+    text.data.text_chars = malloc(text.len_bytes + BLOCK_SIZE_BYTES);
+
+    while((bytes_ctr = read(fileno(input_file), text.data.text_chars, text.len_bytes)))
     {
       text.len_bytes = bytes_ctr;
       if (cipher || (!decipher && !cipher))
@@ -236,7 +249,7 @@ int main(int argc, char *argv[])
 
       if(output_file)
       {
-        fwrite(text.data.text_chars, text.len_bytes, 1, output_file);
+        write(fileno(output_file), text.data.text_chars, text.len_bytes);
       }
       else
       {
@@ -300,8 +313,11 @@ int main(int argc, char *argv[])
   {
     cipher_text(&text, key, cipher_args, true);
 
-    printf("Deciphered text: ");
+    printf("Deciphered text as hex: ");
     print_arr(text.data.text_chars, text.len_bytes);
+
+    printf("Deciphered text as ASCII: ");
+    print_arr_ascii(text.data.text_chars, text.len_bytes);
   }
 
   free(text.data.text_blocks);

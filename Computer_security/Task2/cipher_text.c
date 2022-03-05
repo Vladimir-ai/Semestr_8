@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// #define STRANGE_MODE
+
 void process_ecb(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher);
 void process_cbc(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher);
 void process_cfb(text_t *text, cipher_key_t key, const cipher_args_t args, const bool decipher);
@@ -46,6 +48,7 @@ static void apply_func(block_t *block, const block_elem_t key)
 
 static void try_add_padding_to_the_end(text_t *text)
 {
+#ifndef STRANGE_MODE
   size_t idx;
 
   if (text->len_bytes % BLOCK_SIZE_BYTES)
@@ -65,8 +68,22 @@ static void try_add_padding_to_the_end(text_t *text)
 
   text->data.text_chars[idx + text->len_bytes - 1] = idx;
   text->len_bytes += idx;
+#else
+  if (text->len_bytes % BLOCK_SIZE_BYTES)
+  {
+    right_shift_array(&text->data.text_chars[text->len_bytes / BLOCK_SIZE_BYTES * BLOCK_SIZE_BYTES],
+      BLOCK_SIZE_BYTES, (BLOCK_SIZE_BYTES - text->len_bytes % BLOCK_SIZE_BYTES) * 8);
+
+    memset(&text->data.text_chars[text->len_bytes / BLOCK_SIZE_BYTES * BLOCK_SIZE_BYTES],
+      0, BLOCK_SIZE_BYTES - text->len_bytes % BLOCK_SIZE_BYTES);
+
+    text->len_bytes += BLOCK_SIZE_BYTES - text->len_bytes % BLOCK_SIZE_BYTES;
+  }
+#endif /* STRANGE_MODE */
 }
 
+
+#ifndef STRANGE_MODE
 static bool check_padding(const text_t *text)
 {
   size_t padding = text->data.text_chars[text->len_bytes - 1];
@@ -79,12 +96,14 @@ static bool check_padding(const text_t *text)
       return false;
     }
   }
-
   return true;
 }
+#endif /* STRANGE_MODE */
+
 
 static void try_remove_padding_in_end(text_t *text)
 {
+#ifndef STRANGE_MODE
   size_t padding;
 
   padding = text->data.text_chars[text->len_bytes - 1];
@@ -96,6 +115,7 @@ static void try_remove_padding_in_end(text_t *text)
   }
 
   text->len_bytes -= padding;
+#endif /* STRANGE_MODE */
 }
 
 
@@ -126,7 +146,7 @@ void cipher_text(text_t *text, cipher_key_t key, const cipher_args_t args, const
 
   if (decipher)
   {
-    printf("debug: before truncaing: ");
+    printf("debug: before truncating: ");
     print_arr(text->data.text_chars, text->len_bytes);
     try_remove_padding_in_end(text);
   }

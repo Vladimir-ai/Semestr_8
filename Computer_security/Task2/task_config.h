@@ -4,14 +4,14 @@
 #include <stddef.h>
 #include "common.h"
 
-#define BLOCK_SIZE_BYTES          16U
+#define BLOCK_SIZE_BYTES          8U
 #define BLOCK_PIECES_COUNT        4U
 #define IV_SIZE_BYTES             BLOCK_SIZE_BYTES
 #define ROUND_COUNT               BLOCK_SIZE_BYTES
 #define TEXT_LEN_BYTES            (BLOCK_SIZE_BYTES * 10U)
 
 #define BLOCK_PIECE_SIZE_BYTES    ((BLOCK_SIZE_BYTES) / (BLOCK_PIECES_COUNT))
-#define KEY_LEN_BYTES             ((BLOCK_SIZE_BYTES) * 2U)
+#define KEY_LEN_BYTES             ((BLOCK_SIZE_BYTES))
 #define TEXT_LEN_BLOCKS           ((TEXT_LEN_BYTES) / (BLOCK_SIZE_BYTES))
 
 #define CPY_BLOCK(dst, src)        (memcpy((void *)(dst), (void *)(src), (BLOCK_SIZE_BYTES)))
