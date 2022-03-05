@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include "common.h"
 
-#define BLOCK_SIZE_BYTES          8U
+#define BLOCK_SIZE_BYTES          16U
 #define BLOCK_PIECES_COUNT        4U
 #define IV_SIZE_BYTES             BLOCK_SIZE_BYTES
 #define ROUND_COUNT               BLOCK_SIZE_BYTES
