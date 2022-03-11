@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 
+from numpy import block
 from sympy import totient
-
 
 n = 889577666850907
 arr = [403013074606912, 545180648978557, 219641194372024, 501606729868202, 878976557455422]
-
 e = 13971
 
 ct = 403013074606912545180648978557219641194372024501606729868202878976557455422
-
 # http://www.factordb.com/index.php?query=889577666850907+
 p = 2432279
 q = 365738333
 
+# https://codeiiest-dev.github.io/Algorithms/Algebra/EulerTotient/EulerTotient.html
 def phi(n):
     result = n
     i = 2
