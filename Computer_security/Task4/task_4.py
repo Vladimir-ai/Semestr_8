@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from numpy import block
 from sympy import totient
 
 
@@ -27,7 +26,6 @@ def gen_arr(ct: int, n: int):
 
 
 n = 889577666850907
-arr = [403013074606912, 545180648978557, 219641194372024, 501606729868202, 878976557455422]
 e = 13971
 
 ct = 403013074606912545180648978557219641194372024501606729868202878976557455422
@@ -50,6 +48,8 @@ def phi(n):
     return result
 
 arr = gen_arr(ct, n)
+
+print(arr)
 
 d = pow(e, -1, phi(n))
 
