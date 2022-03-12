@@ -3,6 +3,29 @@
 from numpy import block
 from sympy import totient
 
+
+def gen_arr(ct: int, n: int):
+  arr = []
+
+  while ct > 0:
+    temp_num = 0
+    power = 1
+
+    if ct > n:
+      while ct % power < n:
+        temp_num = ct % power
+        power *= 10
+    else:
+      temp_num = ct
+      power = 10**20
+
+    arr.append(temp_num)
+    ct //= power // 10
+
+  arr.reverse()
+  return arr
+
+
 n = 889577666850907
 arr = [403013074606912, 545180648978557, 219641194372024, 501606729868202, 878976557455422]
 e = 13971
@@ -25,6 +48,8 @@ def phi(n):
     if n != 1:
         result -= result//n
     return result
+
+arr = gen_arr(ct, n)
 
 d = pow(e, -1, phi(n))
 
