@@ -105,7 +105,6 @@ def get_points_for_cube(random_array: List[int], q: int = 6, dims: int = 2):
 def compute_xi2(random_array: List[float], q: int = 6, dims: int = 2):
   n = len(random_array) // dims
   m = int(pow(q, dims))
-  idx = 0x00
   xi2 = 0.0
   n_by_m = n / m
 
@@ -318,11 +317,3 @@ if __name__ == '__main__':
         f"unique_len={uni_len}", file=sys.stderr)
   plt.show()
 
-  # with PdfPages('plot.pdf') as export_pdf:
-  #   # print(result_arr)
-  #   plt.scatter(range(1, p), result_arr)
-  #   plt.grid(True)
-  #   plt.show()
-
-  #   export_pdf.savefig()
-  #   plt.close()
