@@ -3,8 +3,6 @@
 import re
 import sys
 
-from sympy import substitution
-
 default_char_freq = "оеаинтсрвлкмдпуяыьгзбчйхжшюцщэфёъ"
 dictionary = dict()
 char_freq = dict()
