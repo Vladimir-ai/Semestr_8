@@ -58,22 +58,42 @@ def good_suffix_weak_preprocess(substr: str):
   return bs
 
 
-def good_suffix_strong_preprocess(bs: List[int]):
+def good_suffix_strong_preprocess(bs, n):
+  bsm = [0] * n
+  bsm[0] = bs[0]
+
+  for idx in range(n - 2, -1, -1):
+    if (bs[idx] and (bs[idx] + 1 == bs[idx - 1])):
+      bsm[idx] = bsm[n - bs[idx]];
+    else:
+      bsm[idx] = bs[idx];
+
+  return bsm
+
+
+def border_suffix_to_border_restricted(bs: List[int]):
   current_border = bs[0]
   k = 0
-  border_shift = [0] * len(bs)
+  border_restricted = [0] * len(bs)
 
   while current_border:
     while k < len(bs) - current_border:
-      border_shift[k] = current_border
-      current_border = bs[k]
+      border_restricted[k] = current_border
       k += 1
 
-  while k < len(bs):
-    border_shift[k] = 0
-    k += 1
+    current_border = bs[k]
 
-  return border_shift
+  return border_restricted
+
+
+def border_suffixes_to_nearest_suffixes(bs, m):
+  ns = [-1] * m
+  for j in range(m - 1):
+    if bs[j]:
+      k = m - bs[j] - 1;
+      ns[k] = j;
+
+  return ns
 
 
 def shift_good_suffix_rule(ns, br, bad_pos):
@@ -87,7 +107,7 @@ def shift_good_suffix_rule(ns, br, bad_pos):
   if copy_pos >= 0:
     shift = bad_pos - copy_pos + 1
   else:
-    shift = len(bad_pos) - br[bad_pos]
+    shift = len(br) - br[bad_pos]
 
   return shift
 
@@ -100,7 +120,9 @@ def boyer_moore(substr: str, text: str, debug = False):
 
   bad_char_tbl = bad_char_preprocess(substr)
   border_pos = good_suffix_weak_preprocess(substr)
-  shift_arr = good_suffix_strong_preprocess(border_pos)
+  borders_restricted = border_suffix_to_border_restricted(border_pos)
+  border_pos = good_suffix_strong_preprocess(border_pos, len(substr))
+  nearest_suffixes = border_suffixes_to_nearest_suffixes(border_pos, len(substr))
 
   while(idx <= n):
     if (bad_pos := reverse_check(substr, text[idx - m : idx])) == -1:
@@ -111,7 +133,7 @@ def boyer_moore(substr: str, text: str, debug = False):
 
     shift = max(1,\
                 # shift_bad_char_rule(substr[bad_pos], bad_pos, bad_char_tbl),
-                shift_good_suffix_rule(shift_arr, border_pos, bad_pos))
+                shift_good_suffix_rule(nearest_suffixes, borders_restricted, bad_pos))
     idx += shift
 
   return result
@@ -129,7 +151,8 @@ if __name__ == "__main__":
   result = boyer_moore(substring, string, True)
   t1 = time()
 
-  print(result)
+  print(f"Substring indexes: {result}")
+  print(f"Running time: {t1 - t0}")
 
 
 
