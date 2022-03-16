@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from operator import le
 import sys
 from time import time
 from typing import List
