@@ -131,7 +131,7 @@ def boyer_moore(substr: str, text: str, debug = False):
       result.append(idx - m)
 
     shift = max(1,\
-                # shift_bad_char_rule(substr[bad_pos], bad_pos, bad_char_tbl),
+                shift_bad_char_rule(substr[bad_pos], bad_pos, bad_char_tbl),
                 shift_good_suffix_rule(nearest_suffixes, borders_restricted, bad_pos))
     idx += shift
 
