@@ -9,6 +9,9 @@ module Tr
     , tr
     ) where
 
+import Data.Maybe
+import Data.List
+
 -- | Just to give `tr` a more descriptive type
 type CharSet = String
 
@@ -32,4 +35,14 @@ type CharSet = String
 -- the second argument being `Just ""`, we will not be testing this edge case.
 
 tr :: CharSet -> Maybe CharSet -> String -> String
-tr _inset _outset xs = xs
+tr _inset _outset xs =
+  -- Check if _outset arg is empty
+  if null (fromMaybe "" _outset)
+  then
+    -- Remove if there isn't any symbols.
+    filter (\c -> isNothing (c `elemIndex` _inset)) xs
+  else
+    let rep_count = ceiling (fromIntegral(if (length(_inset) - length(_outset)) > 0 then length(_inset) else 1) / fromIntegral(length(_outset)))
+    in
+      let actual_outset = (take (length _inset) (concat (replicate rep_count (fromMaybe "" _outset))))
+      in map (\c -> if isNothing (c `elemIndex` _inset) then c else actual_outset !! (fromMaybe 0 (c `elemIndex` _inset))) xs

@@ -8,6 +8,8 @@ module Main (main) where
 
 import Test.Hspec
 import Test.QuickCheck
+import Data.Maybe
+import Data.String
 
 import Tr
 
@@ -34,6 +36,13 @@ main = hspec $ describe "Testing tr" $ do
     describe "tr quick-check" $
       it "empty input is identity" $ property prop_empty_id
 
+    describe "tr reverse" $
+      it "abcd -> dcba" $
+        tr' "abcd" "dcba" "abcd" `shouldBe` "dcba"
+
+    describe "tr delete" $
+      it "delete e" $
+        tr' "e" "" "delete" `shouldBe` "dlt"
 -- | An example QuickCheck test. Tests the invariant that `tr` with an empty
 -- input string should produce and empty output string.
 prop_empty_id :: CharSet' -> CharSet' -> Bool
