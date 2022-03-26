@@ -11,6 +11,7 @@ module Tr
 
 import Data.Maybe
 import Data.List
+import GHC.Float
 
 -- | Just to give `tr` a more descriptive type
 type CharSet = String
@@ -42,7 +43,9 @@ tr _inset _outset xs =
     -- Remove if there isn't any symbols.
     filter (\c -> isNothing (c `elemIndex` _inset)) xs
   else
-    let rep_count = ceiling (fromIntegral(if (length(_inset) - length(_outset)) > 0 then length(_inset) else 1) / fromIntegral(length(_outset)))
+    let rep_count = ceiling (int2Double(get_diff _inset _outset) / int2Double(length _outset))
     in
       let actual_outset = (take (length _inset) (concat (replicate rep_count (fromMaybe "" _outset))))
       in map (\c -> if isNothing (c `elemIndex` _inset) then c else actual_outset !! (fromMaybe 0 (c `elemIndex` _inset))) xs
+
+    where get_diff _inset _outset = if (length(_inset) - length(_outset)) > 0 then length _inset else 1

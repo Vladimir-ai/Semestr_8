@@ -43,6 +43,11 @@ main = hspec $ describe "Testing tr" $ do
     describe "tr delete" $
       it "delete e" $
         tr' "e" "" "delete" `shouldBe` "dlt"
+
+    describe "extend second arg" $
+      it "abc -> d" $
+        tr' "abc" "ddde" "abcd" `shouldBe` "dddd"
+
 -- | An example QuickCheck test. Tests the invariant that `tr` with an empty
 -- input string should produce and empty output string.
 prop_empty_id :: CharSet' -> CharSet' -> Bool

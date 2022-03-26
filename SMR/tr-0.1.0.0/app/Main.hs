@@ -16,5 +16,3 @@ main = do
     then putStrLn $ tr (args!!1) (Just "") (args!!2)
     else putStrLn $ tr (args!!0) (Just (args!!1)) (args!!2)
   else putStrLn $ "Incorrect args"
-  -- $ tr "" (Just "") ""
-
