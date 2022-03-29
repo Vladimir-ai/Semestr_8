@@ -5,14 +5,30 @@
 module Main where
 import Tr
 import System.Environment (getArgs)
+import System.IO (getLine, isEOF)
+
+loop :: String -> String -> String -> IO ()
+loop arg1 arg2 line =
+  do
+    if arg1 == "-d"
+    then putStrLn $ tr (arg2) (Just "") (line)
+    else putStrLn $ tr (arg1) (Just (arg2)) (line)
+
+    newLine <- getLine
+
+    loop arg1 arg2 newLine
+
 
 -- | Main - parse args, and read from stdin.
 main :: IO ()
 main = do
   args <- getArgs
-  if length args == 3
-  then
-    if args!!0 == "-d"
-    then putStrLn $ tr (args!!1) (Just "") (args!!2)
-    else putStrLn $ tr (args!!0) (Just (args!!1)) (args!!2)
-  else putStrLn $ "Incorrect args"
+
+  if length args /= 2
+    then putStrLn $ "Incorrect args"
+    else
+      do
+        newLine <- getLine
+        loop (args!!0) (args!!1) newLine
+
+
