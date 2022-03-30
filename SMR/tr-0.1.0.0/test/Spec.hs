@@ -42,7 +42,7 @@ main = hspec $ describe "Testing tr" $ do
 
     describe "tr delete" $
       it "delete e" $
-        tr' "e" "" "delete" `shouldBe` "dlt"
+        tr "e" Nothing "delete" `shouldBe` "dlt"
 
     describe "extend second arg" $
       it "abc -> d" $

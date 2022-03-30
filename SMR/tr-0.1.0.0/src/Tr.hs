@@ -38,14 +38,14 @@ type CharSet = String
 tr :: CharSet -> Maybe CharSet -> String -> String
 tr _inset _outset xs =
   -- Check if _outset arg is empty
-  if null (fromMaybe "" _outset)
-  then
+  case _outset of
+  Nothing ->
     -- Remove if there isn't any symbols.
     filter (\c -> isNothing (c `elemIndex` _inset)) xs
-  else
-    let rep_count = ceiling (int2Double(get_diff _inset _outset) / int2Double(length _outset))
+  Just value ->
+    let rep_count = ceiling (int2Double(get_diff _inset _outset) / int2Double(length value))
     in
-      let actual_outset = (take (length _inset) (concat (replicate rep_count (fromMaybe "" _outset))))
+      let actual_outset = (take (length _inset) (concat (replicate rep_count value)))
       in map (\c -> if isNothing (c `elemIndex` _inset) then c else actual_outset !! (fromMaybe 0 (c `elemIndex` _inset))) xs
 
     where get_diff _inset _outset = if (length(_inset) - length(_outset)) > 0 then length _inset else 1
