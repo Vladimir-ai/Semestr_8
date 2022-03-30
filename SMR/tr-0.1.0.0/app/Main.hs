@@ -5,7 +5,6 @@
 module Main where
 import Tr
 import System.Environment (getArgs)
-import System.IO (getLine)
 
 loop :: String -> String -> String -> IO ()
 loop arg1 arg2 line =
