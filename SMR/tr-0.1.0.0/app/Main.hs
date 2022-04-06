@@ -10,8 +10,8 @@ loop :: String -> String -> String -> IO ()
 loop arg1 arg2 line =
   do
     if arg1 == "-d"
-    then putStrLn $ tr (arg2) Nothing (line)
-    else putStrLn $ tr (arg1) (Just (arg2)) (line)
+    then putStrLn $ tr arg2 Nothing line
+    else putStrLn $ tr arg1 (Just arg2) line
 
     newLine <- getLine
 
@@ -23,11 +23,11 @@ main :: IO ()
 main = do
   args <- getArgs
 
-  if or [length args /= 2,  null (args!!1)]
-    then putStrLn $ "Incorrect args"
+  if length args /= 2 || null (args!!1)
+    then putStrLn "Incorrect args"
     else
       do
         newLine <- getLine
-        loop (args!!0) (args!!1) newLine
+        loop (head args) (args!!1) newLine
 
 
