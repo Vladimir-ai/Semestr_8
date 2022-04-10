@@ -1,20 +1,18 @@
 module Factors
-    (isqrt,
-      checkNumIsPrime,
+    (checkNumIsPrime,
       getFactorCount,
       findAllFactors
     ) where
-import GHC.Float (int2Double)
-
-
-isqrt :: Int -> Int
-isqrt value = ceiling $ sqrt $ int2Double value
 
 
 checkNumIsPrime :: Int -> Bool
 checkNumIsPrime num
   | num == 2 = True
-  | otherwise = null [x | x <- [2..isqrt num], mod num x == 0]
+  | otherwise = not $ any divisible $ takeWhile notTooBig [2..]
+  where
+    divisible y = mod num y == 0
+    notTooBig y = y * y <= num
+
 
 
 getFactorCount :: Int -> Int -> Int

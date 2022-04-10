@@ -7,22 +7,6 @@ import Data.Foldable (find)
 
 main :: IO ()
 main = hspec $ describe "Testing factors" $ do
-      describe "Checking isqrt function" $ do
-        context "Integer result" $ do
-          it "4 -> 2" $
-            isqrt 4 `shouldBe` 2
-
-          it "100 -> 10" $
-            isqrt 100 `shouldBe` 10
-
-        context "Fractional result" $ do
-          it "10 -> 4" $
-            isqrt 10 `shouldBe` 4
-
-          it "101 -> 11" $
-            isqrt 101 `shouldBe` 11
-
-
       describe "Checking getFactorCount function" $ do
         context "Multiple factors" $ do
           it "4 2 -> 2" $
