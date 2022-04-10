@@ -28,10 +28,9 @@ getFactor :: Int -> Int -> [Int]
 getFactor num divisor
   | num == 1 = []
   | checkNumIsPrime num = [num]
-  | otherwise = if checkNumIsPrime divisor && factorCount > 0
-                  then replicate factorCount divisor ++ getFactor (div num (divisor ^ factorCount)) (divisor + 1)
-                  else getFactor num (divisor + 1)
-                  where factorCount = getFactorCount num divisor
+  | checkNumIsPrime divisor && factorCount > 0 = replicate factorCount divisor ++ getFactor (div num (divisor ^ factorCount)) (divisor + 1)
+  | otherwise = getFactor num (divisor + 1)
+  where factorCount = getFactorCount num divisor
 
 
 findAllFactors :: Int -> [Int]
