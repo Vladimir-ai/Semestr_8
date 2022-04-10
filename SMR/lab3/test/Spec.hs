@@ -57,6 +57,9 @@ main = hspec $ describe "Testing factors" $ do
             findAllFactors 33 `shouldBe` [3, 11]
 
         context "Prime numbers" $ do
+          it "2 -> [2]" $
+            findAllFactors 2 `shouldBe` [2]
+
           it "23 -> 23" $
             findAllFactors 23 `shouldBe` [23]
 

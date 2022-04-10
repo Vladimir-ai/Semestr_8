@@ -14,12 +14,10 @@ checkNumIsPrime num
     notTooBig y = y * y <= num
 
 
-
 getFactorCount :: Int -> Int -> Int
-getFactorCount num divisor =
-  case mod num divisor of
-    0 -> 1 + getFactorCount (div num divisor) divisor
-    _ -> 0
+getFactorCount num divisor
+  | mod num divisor == 0 = 1 + getFactorCount (div num divisor) divisor
+  | otherwise = 0
 
 
 getFactor :: Int -> Int -> [Int]
