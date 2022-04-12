@@ -23,8 +23,8 @@ getFactorCount num divisor
 getFactor :: Int -> Int -> [Int]
 getFactor num divisor
   | num == 1 = []
-  | checkNumIsPrime num = [num]
   | checkNumIsPrime divisor && factorCount > 0 = replicate factorCount divisor ++ getFactor (div num (divisor ^ factorCount)) (divisor + 1)
+  | checkNumIsPrime num = [num]
   | otherwise = getFactor num (divisor + 1)
   where factorCount = getFactorCount num divisor
 
