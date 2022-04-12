@@ -30,5 +30,6 @@ getFactor num divisor
 
 
 findAllFactors :: Int -> [Int]
-findAllFactors input =
-  getFactor input 2
+findAllFactors input
+  | input > 0 = getFactor input 2
+  | otherwise = getFactor (abs input) 2
