@@ -23,28 +23,6 @@ main = hspec $ describe "Testing factors" $ do
             getFactorCount 101 10 `shouldBe` 0
 
 
-      describe "checking checkNumIsPrime function" $ do
-        context "Primes" $ do
-          it "2 -> True" $
-            checkNumIsPrime 2 `shouldBe` True
-
-          it "3 -> True" $
-            checkNumIsPrime 3 `shouldBe` True
-
-          it "101 -> True" $
-            checkNumIsPrime 101 `shouldBe` True
-
-        context "Not primes" $ do
-          it "10 -> False" $
-            checkNumIsPrime 10 `shouldBe` False
-
-          it "2000 -> False" $
-            checkNumIsPrime 2000 `shouldBe` False
-
-          it "4 -> False" $
-            checkNumIsPrime 4 `shouldBe` False
-
-
       describe "Checking findAllFactors function" $ do
         context "Complex numbers" $ do
           it "100 -> [2, 2, 5, 5]" $
@@ -60,8 +38,25 @@ main = hspec $ describe "Testing factors" $ do
           it "2 -> [2]" $
             findAllFactors 2 `shouldBe` [2]
 
-          it "23 -> 23" $
+          it "23 -> [23]" $
             findAllFactors 23 `shouldBe` [23]
 
-          it "127 -> 127" $
+          it "127 -> [127]" $
             findAllFactors 127 `shouldBe` [127]
+
+        context "Empty list result" $ do
+          it "1 -> []" $
+            findAllFactors 1 `shouldBe` []
+
+          it "0 -> []" $
+            findAllFactors 0 `shouldBe` []
+
+        context "Negative numbers" $ do
+          it "-1 -> []" $
+            findAllFactors (-1) `shouldBe` []
+
+          it "-2 -> [2]" $
+            findAllFactors (-2) `shouldBe` [2]
+
+          it "-4 -> [2, 2]" $
+            findAllFactors (-4) `shouldBe` [2,2]

@@ -1,17 +1,7 @@
 module Factors
-    (checkNumIsPrime,
-      getFactorCount,
+    (getFactorCount,
       findAllFactors
     ) where
-
-
-checkNumIsPrime :: Int -> Bool
-checkNumIsPrime num
-  | num == 2 = True
-  | otherwise = not $ any divisible $ takeWhile notTooBig [2..]
-  where
-    divisible y = mod num y == 0
-    notTooBig y = y * y <= num
 
 
 getFactorCount :: Int -> Int -> Int
@@ -22,9 +12,9 @@ getFactorCount num divisor
 
 getFactor :: Int -> Int -> [Int]
 getFactor num divisor
-  | num == 1 = []
-  | checkNumIsPrime divisor && factorCount > 0 = replicate factorCount divisor ++ getFactor (div num (divisor ^ factorCount)) (divisor + 1)
-  | checkNumIsPrime num = [num]
+  | num <= 1 = []
+  | factorCount > 0 = replicate factorCount divisor ++ getFactor (div num (divisor ^ factorCount)) (divisor + 1)
+  | num < divisor * divisor = [num]
   | otherwise = getFactor num (divisor + 1)
   where factorCount = getFactorCount num divisor
 
