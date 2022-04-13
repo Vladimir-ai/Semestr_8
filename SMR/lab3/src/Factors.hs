@@ -9,9 +9,10 @@ getFactorCount num divisor =
   helper num divisor 0
   where
     helper :: Int -> Int -> Int -> Int
+    helper 0 _ count = count
     helper number divisr count
       | mod number divisr == 0 = helper (div number divisr) divisr (count + 1)
-      | otherwise = count
+      | otherwise = helper 0 divisr count
 
 
 getFactor :: Int -> Int -> [Int]
@@ -19,10 +20,11 @@ getFactor num divisor =
   helper num divisor []
   where
     helper :: Int -> Int -> [Int] -> [Int]
+    helper 1 _ acc = acc
+    helper 0 _ acc = acc
     helper number divisr acc
-      | number <= 1 = acc
       | factorCount > 0 = helper (div number (divisr ^ factorCount)) (divisr + 1) (acc ++ replicate factorCount divisr)
-      | number < divisr * divisr = acc ++ [number]
+      | number < divisr * divisr = helper 1 (divisr + 1) (acc ++ [number])
       | otherwise = helper number (divisr + 1) acc
       where factorCount = getFactorCount number divisr
 
