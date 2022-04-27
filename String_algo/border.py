@@ -22,3 +22,13 @@ def prefix_border_arrayM(s, bp):
         else:
             bpm[i] = bp[i]
     return bpm
+
+def bp_to_bpm(bp, n):
+    bpm = [0 for i in range(n)]
+    bpm[n - 1] = bp[n - 1]
+    for i in range(1, n - 1):
+        if bp[i] and bp[i] + 1 == bp[i + 1]:
+            bpm[i] = bpm[bp[i] - 1]
+        else:
+            bpm[i] = bp[i]
+    return bpm
