@@ -14,5 +14,5 @@ def kmp(p, t):
             k += 1
         if k == m:
             res.append(i - k + 1)
-            k -= 1
+            k = bpm[k - 1]
     return res
